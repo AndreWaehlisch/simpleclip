@@ -11,7 +11,7 @@
 #define MAXROWS 5
 
 class Window : public QWidget {
-        Q_OBJECT
+    Q_OBJECT
 
     public:
         Window(QWidget *parent = nullptr);

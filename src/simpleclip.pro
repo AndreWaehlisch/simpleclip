@@ -3,8 +3,11 @@ QT += core widgets gui
 TARGET        = simpleclip
 TEMPLATE      = app
 
-HEADERS       = window.h
+HEADERS       = window.h \
+                nativeevent_win.h
+
 SOURCES       = main.cpp \
+                nativeevent_win.cpp \
                 window.cpp
 
 win32 {
