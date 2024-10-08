@@ -2,7 +2,6 @@
 
 #include "global.h"
 #include "nativeevent_win.h"
-#include "window.h"
 
 #include <QDebug>
 
