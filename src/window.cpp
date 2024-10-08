@@ -2,7 +2,8 @@
 #include <QGridLayout>
 #include <QHeaderView>
 #include <QTableWidgetItem>
-
+#include <QTableWidgetSelectionRange>
+#include <QSettings>
 #include <QByteArray>
 #include <QMimeData>
 #include <QHash>
@@ -10,8 +11,11 @@
 
 #include "window.h"
 
+#define MAXROWS 5 // maximum number of rows our QTableWidget will grow to
+
 Window::Window(QWidget *parent) : QWidget(parent) {
     setWindowTitle("simpleclip");
+
     const QSize size(300, 500);
     resize(size);
     setMinimumSize(size);
@@ -19,7 +23,8 @@ Window::Window(QWidget *parent) : QWidget(parent) {
 
     historyTable = new QTableWidget(0, 2);
     historyTable->setSortingEnabled(false);
-    historyTable->setSelectionMode(QAbstractItemView::NoSelection);
+    historyTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    historyTable->setSelectionMode(QAbstractItemView::SingleSelection);
     const QStringList labels = { tr("Content"), tr("Timestamp") };
     historyTable->setHorizontalHeaderLabels(labels);
     historyTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
@@ -84,15 +89,25 @@ void Window::clipboard_updated(){
         timestamp->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         timestamp->setFlags(timestamp->flags() ^ Qt::ItemIsEditable);
         historyTable->setItem(row, 1, timestamp);
+
+        historyTable->selectRow(row);
     }
 }
 
 void Window::button_up_clicked(){
-    // TODO
+    const int row = historyTable->currentRow();
+
+    if ( row > 0 ) {
+        historyTable->selectRow(row - 1);
+    }
 }
 
 void Window::button_down_clicked(){
-    // TODO
+    const int row = historyTable->currentRow();
+
+    if ( (row < MAXROWS) && (row != -1) ) {
+        historyTable->selectRow(row + 1);
+    }
 }
 
 void Window::button_delete_clicked(){
@@ -102,4 +117,10 @@ void Window::button_delete_clicked(){
 void Window::button_clear_clicked(){
     historyTable->clearContents();
     historyTable->setRowCount(0);
+}
+
+void Window::closeEvent(QCloseEvent *event) {
+    QSettings settings;
+    settings.setValue("window_geometry", saveGeometry());
+    QWidget::closeEvent(event);
 }

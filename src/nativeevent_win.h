@@ -5,15 +5,18 @@
 #include <QAbstractNativeEventFilter>
 #include <QByteArray>
 
+#include "window.h"
+
 #ifndef Q_OS_WIN
 #error Must be on Windows at this point
 #endif
 
-#include <qt_windows.h>
-
 class nativeevent_win : public QAbstractNativeEventFilter
 {
+    private:
+        Window *window;
     public:
+        nativeevent_win(Window *window);
         bool nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result) override;
 };
 

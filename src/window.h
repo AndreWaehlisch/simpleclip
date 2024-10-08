@@ -5,10 +5,9 @@
 #include <QClipboard>
 #include <QTableWidget>
 #include <QPushButton>
+#include <QCloseEvent>
 
 #include <QDebug>
-
-#define MAXROWS 5
 
 class Window : public QWidget {
     Q_OBJECT
@@ -16,12 +15,14 @@ class Window : public QWidget {
     public:
         Window(QWidget *parent = nullptr);
 
-    private slots:
-        void clipboard_updated();
+    public slots:
         void button_up_clicked();
         void button_down_clicked();
         void button_delete_clicked();
         void button_clear_clicked();
+
+    private slots:
+        void clipboard_updated();
 
     private:
         QTableWidget *historyTable;
@@ -32,6 +33,8 @@ class Window : public QWidget {
         QPushButton *button_down;
         QPushButton *button_delete;
         QPushButton *button_clear;
+
+        void closeEvent(QCloseEvent *event) override;
 };
 
 #endif

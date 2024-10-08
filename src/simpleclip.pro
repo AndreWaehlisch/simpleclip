@@ -4,6 +4,7 @@ TARGET        = simpleclip
 TEMPLATE      = app
 
 HEADERS       = window.h \
+                global.h \
                 nativeevent_win.h
 
 SOURCES       = main.cpp \

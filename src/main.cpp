@@ -1,16 +1,23 @@
 #include <QCoreApplication>
 #include <QApplication>
 #include <QObject>
+#include <QSettings>
 
+#include "global.h"
 #include "window.h"
 
 #ifdef Q_OS_WIN
 #include <nativeevent_win.h>
+#include <qt_windows.h>
 #endif
 
-void unregisterHotkey(){
-    qDebug() << "TESTER";
-    // TODO: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-unregisterhotkey
+void cleanUp(){
+    #ifdef Q_OS_WIN
+        // unregister all hotkeys we requested with MS Windows
+        for ( int i_hotkey = hotkey_down; i_hotkey != hotkey_LAST; i_hotkey++ ) {
+            UnregisterHotKey(NULL, i_hotkey);
+        }
+    #endif
 }
 
 int main(int argc, char *argv[]) {
@@ -18,29 +25,35 @@ int main(int argc, char *argv[]) {
     app.setOrganizationName("AndreWaehlisch");
     app.setApplicationName("simpleclip");
 
-    nativeevent_win *filter = new nativeevent_win;
-    app.installNativeEventFilter(filter);
-
-    //const QIcon mainIcon(":/icon.ico");
     Window window;
+    //const QIcon mainIcon(":/icon.ico");
     window.setWindowFlags(Qt::Dialog);
     //window.setWindowIcon(mainIcon);
     window.show();
 
-    const BOOL register_hotkey_ok = RegisterHotKey(NULL, 1, MOD_ALT | MOD_NOREPEAT, 0x42);
-    qDebug() << "register b ok:" << register_hotkey_ok;
-    // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registerhotkey
-    // https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-hotkey
-    // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getmessage
-    // https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-msg
+    QSettings settings;
+    window.restoreGeometry(settings.value("window_geometry").toByteArray());
 
-    // https://doc.qt.io/qt-6/qabstractnativeeventfilter.html#nativeEventFilter
-    // https://doc.qt.io/qt-6/qcoreapplication.html#installNativeEventFilter
+    #ifdef Q_OS_WIN
+        // install native event filter for MS Windows so we get every hotkey message (even if we are for example minimized), for details see:
+        // https://doc.qt.io/qt-6/qabstractnativeeventfilter.html
+        // https://forum.qt.io/topic/57372
+        nativeevent_win filter = nativeevent_win(&window);
+        app.installNativeEventFilter(&filter);
 
-	// https://forum.qt.io/post/285795
-    // https://github.com/Skycoder42/QHotkey/blob/master/QHotkey/qhotkey_win.cpp
+        const BOOL register_hotkey_down_ok = RegisterHotKey(NULL, hotkey_down, MOD_WIN | MOD_ALT | MOD_NOREPEAT, 0x56); // WIN + ALT + v
+        const BOOL register_hotkey_up_ok = RegisterHotKey(NULL, hotkey_up, MOD_WIN | MOD_ALT | MOD_NOREPEAT, 0x43); // WIN + ALT + c
+        // TODO: add win-key (without modifier/additional key) to display our window temporarily
+        // perhaps with a QTimer and checking if win-key is still pressed with: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getkeystate
 
-    QObject::connect(&app, &QCoreApplication::aboutToQuit, unregisterHotkey);
+        if ( (!register_hotkey_down_ok) || (!register_hotkey_up_ok)) {
+            qDebug() << "RegisterHotKey FAILED!";
+            // TODO: handle this error (may probably happen when other program already has this hotkey registered?!)
+            app.quit();
+        }
+    #endif
+
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, cleanUp);
 
     return app.exec();
 }
