@@ -26,9 +26,9 @@ int main(int argc, char *argv[]) {
     app.setApplicationName("simpleclip");
 
     Window window;
-    //const QIcon mainIcon(":/icon.ico");
+    const QIcon mainIcon(":/icon.ico");
     window.setWindowFlags(Qt::Dialog);
-    //window.setWindowIcon(mainIcon);
+    window.setWindowIcon(mainIcon);
     window.show();
 
     QSettings settings;
