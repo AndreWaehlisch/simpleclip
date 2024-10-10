@@ -41,15 +41,14 @@ int main(int argc, char *argv[]) {
         nativeevent_win filter = nativeevent_win(&window);
         app.installNativeEventFilter(&filter);
 
-        const BOOL register_hotkey_down_ok = RegisterHotKey(NULL, hotkey_down, MOD_WIN | MOD_ALT | MOD_NOREPEAT, 0x56); // WIN + ALT + v
-        const BOOL register_hotkey_up_ok = RegisterHotKey(NULL, hotkey_up, MOD_WIN | MOD_ALT | MOD_NOREPEAT, 0x43); // WIN + ALT + c
+        const BOOL register_hotkey_down_ok = RegisterHotKey(NULL, hotkey_up, MOD_WIN | MOD_ALT | MOD_NOREPEAT, 0x56); // WIN + ALT + v
+        const BOOL register_hotkey_up_ok = RegisterHotKey(NULL, hotkey_down, MOD_WIN | MOD_ALT | MOD_NOREPEAT, 0x43); // WIN + ALT + c
         // TODO: add win-key (without modifier/additional key) to display our window temporarily
         // perhaps with a QTimer and checking if win-key is still pressed with: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getkeystate
 
         if ( (!register_hotkey_down_ok) || (!register_hotkey_up_ok)) {
             qDebug() << "RegisterHotKey FAILED!";
             // TODO: handle this error (may probably happen when other program already has this hotkey registered?!)
-            app.quit();
         }
     #endif
 

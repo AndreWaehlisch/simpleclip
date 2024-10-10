@@ -4,10 +4,16 @@
 #include <QWidget>
 #include <QClipboard>
 #include <QTableWidget>
+#include <QTableWidgetItem>
 #include <QPushButton>
 #include <QCloseEvent>
 
 #include <QDebug>
+
+enum clipboard_dataIDs {
+    clipboardID_data = Qt::UserRole,
+    clipboardID_formats
+};
 
 class Window : public QWidget {
     Q_OBJECT
@@ -27,7 +33,8 @@ class Window : public QWidget {
     private:
         QTableWidget *historyTable;
         QClipboard *clipboard;
-        uint last_hash;
+        size_t last_hash;
+        bool clipboardUpdate = true; // only parse updates from outside our program
 
         QPushButton *button_up;
         QPushButton *button_down;
@@ -35,6 +42,7 @@ class Window : public QWidget {
         QPushButton *button_clear;
 
         void closeEvent(QCloseEvent *event) override;
+        void setNewClipboard(const QTableWidgetItem * const item);
 };
 
 #endif

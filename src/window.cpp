@@ -1,17 +1,16 @@
 #include <QGuiApplication>
 #include <QGridLayout>
 #include <QHeaderView>
-#include <QTableWidgetItem>
-#include <QTableWidgetSelectionRange>
 #include <QSettings>
 #include <QByteArray>
 #include <QMimeData>
 #include <QHash>
 #include <QTime>
+#include <QList>
 
 #include "window.h"
 
-#define MAXROWS 5 // maximum number of rows our QTableWidget will grow to
+#define MAXROWS 15 // maximum number of rows our QTableWidget will grow to
 
 Window::Window(QWidget *parent) : QWidget(parent) {
     setWindowTitle("simpleclip");
@@ -54,16 +53,28 @@ Window::Window(QWidget *parent) : QWidget(parent) {
 }
 
 void Window::clipboard_updated(){
+    if ( !clipboardUpdate ) {
+        clipboardUpdate = true;
+        qDebug() << "SWALLOW";
+        return;
+    }
+
     const QMimeData * const clipboard_mimedata = clipboard->mimeData(QClipboard::Clipboard);
     const QStringList clipboard_mimeformats = clipboard_mimedata->formats();
-    const QByteArray clipboard_bytearray = clipboard_mimedata->data(clipboard_mimeformats[0]);
-    const uint clipboard_hash = qHash(clipboard_bytearray);
+
+    if ( clipboard_mimeformats.isEmpty() ) {
+        return;
+    }
+
+    const QString firstFormat = clipboard_mimeformats.first();
+    const QByteArray clipboard_firstByteArray = clipboard_mimedata->data(firstFormat);
+    const size_t clipboard_hash = qHash(clipboard_firstByteArray);
 
     // only act on new items
     if (clipboard_hash != last_hash) {
         last_hash = clipboard_hash;
-        qDebug() << clipboard->text() << clipboard_hash << clipboard_mimedata << clipboard_mimedata->hasImage() << clipboard_mimeformats[0];
-
+        qDebug() << "RECEIVE:" << clipboard->text() << clipboard_hash << clipboard_mimedata << clipboard_mimedata->hasImage() << firstFormat;
+        qDebug() << "FORMATLIST:" << clipboard_mimeformats;
         const int row = historyTable->rowCount();
 
         // add new column only if space availble (defined by MAXROWS macro)
@@ -80,6 +91,17 @@ void Window::clipboard_updated(){
         entry->setText(clipboard->text());
         entry->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         entry->setFlags(entry->flags() ^ Qt::ItemIsEditable);
+
+        // store mime data for later retrieval
+        QList<QByteArray> byteArrayList;
+        foreach (QString format, clipboard_mimeformats) {
+            QByteArray byteArray = clipboard_mimedata->data(format);
+            byteArrayList.append(byteArray);
+        }
+        QVariant variant_data = QVariant::fromValue(byteArrayList);
+        entry->setData(clipboardID_formats, clipboard_mimeformats);
+        entry->setData(clipboardID_data, variant_data);
+
         historyTable->setItem(row, 0, entry);
 
         // set timestamp for current item
@@ -94,11 +116,35 @@ void Window::clipboard_updated(){
     }
 }
 
+void Window::setNewClipboard(const QTableWidgetItem * const item = nullptr) {
+    const QTableWidgetItem *currentTableItem;
+
+    // if no specific QTableWidgetItem is provided we just use the "current" item of the QTableWidget
+    if ( item ) {
+        currentTableItem = item;
+    } else {
+        currentTableItem = historyTable->currentItem();
+    }
+
+    QMimeData * const mimedata = new QMimeData();
+    const QStringList formats = qvariant_cast<QStringList>(currentTableItem->data(clipboardID_formats));
+    QList<QByteArray> data = qvariant_cast<QList<QByteArray>>(currentTableItem->data(clipboardID_data));
+
+    for (int i = 0; i < formats.size(); i++) {
+        mimedata->setData(formats[i], data[i]);
+    }
+
+    clipboardUpdate = false;
+    clipboard->setMimeData(mimedata, QClipboard::Clipboard);
+    qDebug() << "updated clipboard!";
+}
+
 void Window::button_up_clicked(){
     const int row = historyTable->currentRow();
 
     if ( row > 0 ) {
         historyTable->selectRow(row - 1);
+        setNewClipboard();
     }
 }
 
@@ -107,6 +153,7 @@ void Window::button_down_clicked(){
 
     if ( (row < MAXROWS) && (row != -1) ) {
         historyTable->selectRow(row + 1);
+        setNewClipboard();
     }
 }
 

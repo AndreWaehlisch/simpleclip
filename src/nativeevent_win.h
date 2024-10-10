@@ -17,6 +17,7 @@ class nativeevent_win : public QAbstractNativeEventFilter
         Window *window;
     public:
         nativeevent_win(Window *window);
+        void forceToFront();
         bool nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result) override;
 };
 

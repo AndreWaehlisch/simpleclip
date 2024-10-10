@@ -15,6 +15,8 @@ bool nativeevent_x11::nativeEventFilter(const QByteArray &eventType, void *messa
     Q_UNUSED(message)
 
     // TODO
+    // https://xcb.freedesktop.org/tutorial/events/
+    // https://github.com/Skycoder42/QHotkey/blob/master/QHotkey/qhotkey_x11.cpp
 
     return false;
 }
