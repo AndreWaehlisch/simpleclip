@@ -22,3 +22,4 @@ win32 {
 }
 
 RESOURCES += ../resources/resources.qrc
+CONFIG += c++11

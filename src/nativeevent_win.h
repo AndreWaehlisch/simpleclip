@@ -8,17 +8,17 @@
 #include "window.h"
 
 #ifndef Q_OS_WIN
-#error Must be on Windows at this point
+    #error Must be on Windows at this point
 #endif
 
 class nativeevent_win : public QAbstractNativeEventFilter
 {
-    private:
-        Window *window;
-    public:
-        nativeevent_win(Window *window);
-        void forceToFront();
-        bool nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result) override;
+private:
+    Window *window;
+public:
+    nativeevent_win(Window *window);
+    void forceToFront();
+    bool nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result) override;
 };
 
 #endif // NATIVEEVENT_WIN_H

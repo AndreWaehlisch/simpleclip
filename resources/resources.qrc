@@ -2,5 +2,9 @@
 <qresource>
 	<!-- image source: https://openclipart.org/detail/24854/architetto-appunti -->
 	<file>icon.ico</file>
+	<!-- image source: https://openclipart.org/detail/35233/tango-inetrnet-web-browser -->
+	<file>web.ico</file>
+	<!-- image source: https://openclipart.org/detail/170115/files -->
+	<file>folders.ico</file>
 </qresource>
 </RCC>
