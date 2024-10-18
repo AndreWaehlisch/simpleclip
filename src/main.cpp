@@ -9,11 +9,11 @@
 #ifdef Q_OS_WIN
     #include <nativeevent_win.h>
     #include <qt_windows.h>
-#endif
 
-// TODO: handle variable type for Linux
-static BOOL register_hotkey_down_ok = false;
-static BOOL register_hotkey_up_ok = false;
+    // TODO: handle variable type for Linux
+    static BOOL register_hotkey_down_ok = false;
+    static BOOL register_hotkey_up_ok = false;
+#endif
 
 void cleanUp()
 {
@@ -26,6 +26,7 @@ void cleanUp()
 #endif
 }
 
+// TODO: implement a simple search
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
