@@ -12,22 +12,12 @@
 #include <QMessageBox>
 
 #include "window.h"
+#include "native_win.h"
 
 #define WINDOW_WIDTH 300 // total width of window (in px)
 #define WINDOW_HEIGHT 500 // total height of window
 #define IMAGEHEIGHT 120 // default height of images; also the maximum height of each row
 #define MAXROWS 55 // maximum number of rows our QTableWidget will grow to
-
-Window::~Window()
-{
-    delete historyTable;
-    delete button_up;
-    delete button_down;
-    delete button_delete;
-    delete button_clear;
-    delete tray;
-    //TODO: can we avoid this by setting app as parent of the QWidgets?
-}
 
 Window::Window() : QWidget(nullptr)
 {
@@ -44,24 +34,7 @@ Window::Window() : QWidget(nullptr)
     setMinimumSize(windowSize);
     setMaximumSize(windowSize);
 
-    trayMenu = new QMenu();
-    trayMenu->addAction(windowTitle())->setDisabled(true); // first (disabled) action is a header (=our name)
-    trayMenu->addAction(tr("Clear"), this, &Window::button_clear_clicked);
-    trayMenu->addSeparator();
-    trayMenu->addAction("TODO1", this, &Window::button_clear_clicked); //TODO: show a preview of (10?) clipboard entries, see: tray_clicked and https://doc.qt.io/qt-6/qwidget.html#insertAction
-    trayMenu->addAction("TODO2", this, &Window::button_clear_clicked);
-    trayMenu->addAction("TODO3", this, &Window::button_clear_clicked);
-    trayMenu->addAction("TODO4", this, &Window::button_clear_clicked);
-    trayMenu->addAction("TODO5", this, &Window::button_clear_clicked);
-    trayMenu->addSeparator();
-    trayMenu->addAction(tr("Exit"), this, &Window::close);
-
-    tray = new QSystemTrayIcon(mainIcon);
-    connect(tray, &QSystemTrayIcon::activated, this, &Window::tray_clicked);
-    tray->setContextMenu(trayMenu);
-    tray->show();
-
-    historyTable = new QTableWidget(0, 2);
+    historyTable = new QTableWidget(0, 2, this);
     historyTable->setSortingEnabled(false);
     historyTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     historyTable->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -69,17 +42,34 @@ Window::Window() : QWidget(nullptr)
     historyTable->setHorizontalHeaderLabels(labels);
     historyTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
-    button_up = new QPushButton("^");
-    button_down = new QPushButton("v");
-    button_delete = new QPushButton("x");
-    button_clear = new QPushButton(tr("clear"));
+    trayMenu = new QMenu(this);
+    trayMenu->addAction(windowTitle())->setDisabled(true); // first (disabled) action is a header (=our name)
+    trayMenu->addAction(tr("Clear"), this, &Window::button_clear_clicked);
+    trayMenu->addSeparator();
+
+    trayMenu->addAction("");
+    trayMenu->addAction("")->setDisabled(true);
+    trayMenu->addAction("");
+
+    trayMenu->addSeparator();
+    trayMenu->addAction(tr("Exit"), this, &Window::close);
+
+    tray = new QSystemTrayIcon(mainIcon, this);
+    connect(tray, &QSystemTrayIcon::activated, this, &Window::tray_clicked);
+    tray->setContextMenu(trayMenu);
+    tray->show();
+
+    button_up = new QPushButton("^", this);
+    button_down = new QPushButton("v", this);
+    button_delete = new QPushButton("x", this);
+    button_clear = new QPushButton(tr("clear"), this);
 
     connect(button_up, &QAbstractButton::clicked, this, &Window::button_up_clicked);
     connect(button_down, &QAbstractButton::clicked, this, &Window::button_down_clicked);
     connect(button_delete, &QAbstractButton::clicked, this, &Window::button_delete_clicked);
     connect(button_clear, &QAbstractButton::clicked, this, &Window::button_clear_clicked);
 
-    QGridLayout *mainLayout = new QGridLayout;
+    QGridLayout *mainLayout = new QGridLayout(this);
 
     mainLayout->addWidget(historyTable, 0, 0, 1, 4);
     mainLayout->addWidget(button_up, 1, 0);
@@ -92,6 +82,26 @@ Window::Window() : QWidget(nullptr)
     clipboard = QGuiApplication::clipboard();
     clipboard_updated();
     connect(clipboard, &QClipboard::dataChanged, this, &Window::clipboard_updated);
+
+    connect(&myTimer, &QTimer::timeout, this, &Window::myTimerEvent);
+    myTimer.setInterval(200);
+    myTimer.start();
+}
+
+inline void Window::myTimerEvent()
+{
+    forceToFront(this);
+}
+
+QString Window::trimText(const QString fullStr)
+{
+    QString result = fullStr.simplified();
+
+    if (result.length() > 30) {
+        result = result.left(27) + "...";
+    }
+
+    return result;
 }
 
 void Window::tray_clicked(QSystemTrayIcon::ActivationReason reason)
@@ -100,6 +110,125 @@ void Window::tray_clicked(QSystemTrayIcon::ActivationReason reason)
         activateWindow();
     } else if (reason == QSystemTrayIcon::Context) {
         qDebug() << "right-click on tray";
+        const int row = historyTable->currentRow();
+        const int numRows = historyTable->rowCount();
+        QList<QAction *> actions = trayMenu->actions();
+
+        QAction *action1 = actions[3];
+        QAction *action2 = actions[4];
+        QAction *action3 = actions[5];
+
+        qDebug() << "row:" << row;
+
+        if (numRows == 0) {
+            action1->setVisible(false);
+            action2->setVisible(false);
+            action3->setVisible(false);
+        } else if (numRows == 1) {
+            action1->setVisible(true);
+            action2->setVisible(false);
+            action3->setVisible(false);
+
+            QFont font1 = action1->font();
+            font1.setBold(true);
+            action1->setFont(font1);
+            action1->setText(trimText(historyTable->item(row, 0)->text()));
+            action1->setDisabled(true);
+        } else if (numRows == 2) {
+            action1->setVisible(true);
+            action2->setVisible(true);
+            action3->setVisible(false);
+
+            if (row == 0) {
+                QFont font1 = action1->font();
+                font1.setBold(true);
+                action1->setFont(font1);
+                action1->setText(trimText(historyTable->item(row, 0)->text()));
+                action1->setDisabled(true);
+
+                QFont font2 = action2->font();
+                font2.setBold(false);
+                action2->setFont(font2);
+                action2->setText(trimText(historyTable->item(row + 1, 0)->text()));
+                action2->setDisabled(false);
+                disconnect(action2, &QAction::triggered, nullptr, nullptr);
+                connect(action2, &QAction::triggered, this, &Window::button_down_clicked);
+            } else {
+                QFont font1 = action1->font();
+                font1.setBold(false);
+                action1->setFont(font1);
+                action1->setText(trimText(historyTable->item(row - 1, 0)->text()));
+                action1->setDisabled(false);
+                disconnect(action1, &QAction::triggered, nullptr, nullptr);
+                connect(action1, &QAction::triggered, this, &Window::button_up_clicked);
+
+                QFont font2 = action2->font();
+                font2.setBold(true);
+                action2->setFont(font2);
+                action2->setText(trimText(historyTable->item(row, 0)->text()));
+                action2->setDisabled(true);
+            }
+        } else {
+            action1->setVisible(true);
+            action2->setVisible(true);
+            action3->setVisible(true);
+
+            if (row == 0) {
+                QFont font1 = action1->font();
+                font1.setBold(true);
+                action1->setFont(font1);
+                action1->setText(trimText(historyTable->item(row, 0)->text()));
+                action1->setDisabled(true);
+
+                QFont font2 = action2->font();
+                font2.setBold(false);
+                action2->setFont(font2);
+                action2->setText(trimText(historyTable->item(row + 1, 0)->text()));
+                action2->setDisabled(false);
+                disconnect(action2, &QAction::triggered, nullptr, nullptr);
+                connect(action2, &QAction::triggered, this, &Window::button_down_clicked);
+
+                action3->setVisible(false);
+            } else if ((row > 0) && (row + 1 < numRows)) {
+                QFont font1 = action1->font();
+                font1.setBold(false);
+                action1->setFont(font1);
+                action1->setText(trimText(historyTable->item(row - 1, 0)->text()));
+                action1->setDisabled(false);
+                disconnect(action1, &QAction::triggered, nullptr, nullptr);
+                connect(action1, &QAction::triggered, this, &Window::button_up_clicked);
+
+                QFont font2 = action2->font();
+                font2.setBold(true);
+                action2->setFont(font2);
+                action2->setText(trimText(historyTable->item(row, 0)->text()));
+                action2->setDisabled(true);
+
+                QFont font3 = action3->font();
+                font3.setBold(false);
+                action3->setFont(font3);
+                action3->setText(trimText(historyTable->item(row + 1, 0)->text()));
+                action3->setDisabled(false);
+                disconnect(action3, &QAction::triggered, nullptr, nullptr);
+                connect(action3, &QAction::triggered, this, &Window::button_down_clicked);
+            } else {
+                QFont font1 = action1->font();
+                font1.setBold(false);
+                action1->setFont(font1);
+                action1->setText(trimText(historyTable->item(row - 1, 0)->text()));
+                action1->setDisabled(false);
+                disconnect(action1, &QAction::triggered, nullptr, nullptr);
+                connect(action1, &QAction::triggered, this, &Window::button_up_clicked);
+
+                QFont font2 = action2->font();
+                font2.setBold(true);
+                action2->setFont(font2);
+                action2->setText(trimText(historyTable->item(row, 0)->text()));
+                action2->setDisabled(true);
+
+                action3->setVisible(false);
+            }
+        }
     }
 }
 
@@ -147,15 +276,27 @@ void Window::clipboard_updated()
             pixmap = QPixmap::fromImage(image);
         } else if (clipboard_mimedata->hasText()) {
             const QString clipboardtext = clipboard->text();
-            const QStringList splitList = clipboardtext.split(R"(file:///)"); // https://en.cppreference.com/w/cpp/language/string_literal
-            const qsizetype listSize = splitList.size();
+            QRegularExpressionMatchIterator matches = regex.globalMatch(clipboardtext);
+            QRegularExpressionMatch firstMatch;
 
-            if (listSize > 2) {
+            int numMatches = 0;
+
+            if (matches.hasNext()) {
+                numMatches += 1;
+                firstMatch = matches.next();
+
+                if (matches.hasNext())
+                    numMatches += 1;
+            }
+
+            qDebug() << "NUM Regex Matches:" << numMatches << firstMatch;
+
+            if (numMatches > 1) {
                 // handle a list of files in the format "file:///C:/....file:///C:/...."
                 pixmap = foldersPixmap;
-            } else if (listSize == 2) {
+            } else if (numMatches == 1) {
                 // handle (single) files in the format "file:///C:/...."
-                const QString cutText = splitList[1];
+                const QString cutText = firstMatch.captured(1);
                 const QFileInfo fileInfo(cutText);
 
                 if (fileInfo.exists()) {
@@ -275,13 +416,17 @@ void Window::button_delete_clicked()
 
 void Window::button_clear_clicked()
 {
-    const QMessageBox::StandardButton result = QMessageBox::question(this, tr("Clear"), tr("Clear all clipboard history?"));
+    const int numRows = historyTable->rowCount();
 
-    if (result == QMessageBox::Yes) {
-        historyTable->clearContents();
-        historyTable->setRowCount(0);
-        clipboard->clear(QClipboard::Clipboard);
-        clipboardUpdate = true;
+    if (numRows > 0) {
+        const QMessageBox::StandardButton result = QMessageBox::question(this, tr("Clear"), tr("Clear all clipboard history?"));
+
+        if (result == QMessageBox::Yes) {
+            historyTable->clearContents();
+            historyTable->setRowCount(0);
+            clipboard->clear(QClipboard::Clipboard);
+            clipboardUpdate = true;
+        }
     }
 }
 

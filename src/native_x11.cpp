@@ -1,7 +1,7 @@
 #include <xcb/xcb.h>
 
 #include "global.h"
-#include "nativeevent_x11.h"
+#include "native_x11.h"
 
 #include <QDebug>
 

@@ -1,22 +1,12 @@
 #include <qt_windows.h>
 
-#include "global.h"
-#include "nativeevent_win.h"
+#include "native_win.h"
 
 #include <QDebug>
 
 nativeevent_win::nativeevent_win(Window *window)
 {
     this->window = window;
-}
-
-void nativeevent_win::forceToFront()
-{
-    const HWND hwnd = reinterpret_cast<HWND>(window->winId());
-    const BOOL setOk = SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-    // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowpos
-
-    qDebug() << "forced to front:" << setOk;
 }
 
 bool nativeevent_win::nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result)
@@ -36,15 +26,27 @@ bool nativeevent_win::nativeEventFilter(const QByteArray &eventType, void *messa
             qDebug() << "UP Key";
             window->button_up_clicked();
             return true;
-        case hotkey_win:
-            qDebug() << "WIN Key";
-            // TODO
-            forceToFront();
         default:
             // should never happen
+            qDebug() << "PANIC";
             break;
         }
     }
 
     return false;
+}
+
+// check if Win key is down and if it is force the window to the front
+void forceToFront(Window *window)
+{
+    const bool winPressed = QGuiApplication::queryKeyboardModifiers().testFlag(Qt::MetaModifier);
+    const HWND foreGroundWindowID = GetForegroundWindow();
+    const HWND hwnd = reinterpret_cast<HWND>(window->winId());
+    const bool isForeground = (foreGroundWindowID == hwnd);
+
+    if (!isForeground && winPressed) {
+        SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+        SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+        qDebug() << "Raised window";
+    }
 }

@@ -3,11 +3,10 @@
 #include <QObject>
 #include <QSettings>
 
-#include "global.h"
 #include "window.h"
 
 #ifdef Q_OS_WIN
-    #include <nativeevent_win.h>
+    #include <native_win.h>
     #include <qt_windows.h>
 
     // TODO: handle variable type for Linux
@@ -43,19 +42,17 @@ int main(int argc, char *argv[])
     window.restoreGeometry(settings.value("window_geometry").toByteArray());
 
 #ifdef Q_OS_WIN
-    // install native event filter for MS Windows so we get every hotkey message (even if we are for example minimized), for details see:
-    // https://doc.qt.io/qt-6/qabstractnativeeventfilter.html
-    // https://forum.qt.io/topic/57372
+    // install native event filter for MS Windows so we get every hotkey message (even if we are for example minimized)
     nativeevent_win filter = nativeevent_win(&window);
     app.installNativeEventFilter(&filter);
 
     register_hotkey_down_ok = RegisterHotKey(NULL, hotkey_down, MOD_WIN | MOD_ALT | MOD_NOREPEAT, 0x56); // WIN + ALT + v
     register_hotkey_up_ok = RegisterHotKey(NULL, hotkey_up, MOD_WIN | MOD_ALT | MOD_NOREPEAT, 0x43); // WIN + ALT + c
-    // TODO: add win-key (without modifier/additional key) to display our window temporarily
     // perhaps with a QTimer and checking if win-key is still pressed with: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getkeystate
 
     if ((!register_hotkey_down_ok) || (!register_hotkey_up_ok)) {
-        qDebug() << "RegisterHotKey FAILED!";
+        DWORD error = GetLastError();
+        qDebug() << "RegisterHotKey FAILED!" << error;
         // TODO: handle this error (may probably happen when other program already has this hotkey registered?)
     }
 #endif
