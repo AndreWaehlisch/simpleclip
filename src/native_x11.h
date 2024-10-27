@@ -20,4 +20,6 @@ public:
     bool nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result) override;
 };
 
+void forceToFront(Window *window);
+
 #endif // NATIVE_X11_H

@@ -12,7 +12,12 @@
 #include <QMessageBox>
 
 #include "window.h"
-#include "native_win.h"
+
+#ifdef Q_OS_WIN
+    #include "native_win.h"
+#else
+    #include "native_x11.h"
+#endif
 
 #define WINDOW_WIDTH 300 // total width of window (in px)
 #define WINDOW_HEIGHT 500 // total height of window

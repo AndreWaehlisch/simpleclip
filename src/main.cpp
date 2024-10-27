@@ -6,12 +6,14 @@
 #include "window.h"
 
 #ifdef Q_OS_WIN
-    #include <native_win.h>
     #include <qt_windows.h>
+    #include "native_win.h"
 
     // TODO: handle variable type for Linux
     static BOOL register_hotkey_down_ok = false;
     static BOOL register_hotkey_up_ok = false;
+#else
+    #include "native_x11.h"
 #endif
 
 void cleanUp()
@@ -39,7 +41,8 @@ int main(int argc, char *argv[])
     window.show();
 
     QSettings settings;
-    window.restoreGeometry(settings.value("window_geometry").toByteArray());
+    if (settings.contains("window_geometry"))
+        window.restoreGeometry(settings.value("window_geometry").toByteArray());
 
 #ifdef Q_OS_WIN
     // install native event filter for MS Windows so we get every hotkey message (even if we are for example minimized)
@@ -48,7 +51,6 @@ int main(int argc, char *argv[])
 
     register_hotkey_down_ok = RegisterHotKey(NULL, hotkey_down, MOD_WIN | MOD_ALT | MOD_NOREPEAT, 0x56); // WIN + ALT + v
     register_hotkey_up_ok = RegisterHotKey(NULL, hotkey_up, MOD_WIN | MOD_ALT | MOD_NOREPEAT, 0x43); // WIN + ALT + c
-    // perhaps with a QTimer and checking if win-key is still pressed with: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getkeystate
 
     if ((!register_hotkey_down_ok) || (!register_hotkey_up_ok)) {
         DWORD error = GetLastError();

@@ -1,6 +1,5 @@
 #include <xcb/xcb.h>
 
-#include "global.h"
 #include "native_x11.h"
 
 #include <QDebug>
@@ -21,4 +20,10 @@ bool nativeevent_x11::nativeEventFilter(const QByteArray &eventType, void *messa
     // https://github.com/Skycoder42/QHotkey/blob/master/QHotkey/qhotkey_x11.cpp
 
     return false;
+}
+
+// check if Win key is down and if it is force the window to the front
+void forceToFront(Window *window)
+{
+    // TODO
 }
