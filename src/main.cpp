@@ -57,6 +57,16 @@ int main(int argc, char *argv[])
         qDebug() << "RegisterHotKey FAILED!" << error;
         // TODO: handle this error (may probably happen when other program already has this hotkey registered?)
     }
+#else
+    nativeevent_x11 filter(&window);
+    app.installNativeEventFilter(&filter);
+
+    if (auto *x11Application = QGuiApplication::nativeInterface<QNativeInterface::QX11Application>()) {
+        xcb_connection_t *connection = x11Application->connection();
+        xcb_void_cookie_t cookie = xcb_grab_key(connection, 1, root, XCB_MOD_MASK_1 | XCB_MOD_MASK_4, keycodes[0], XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC);
+        // https://manpages.ubuntu.com/manpages/focal/man3/xcb_grab_key.3.html
+        // https://doc.qt.io/qt-6/extras-changes-qt6.html
+    }
 #endif
 
     QObject::connect(&app, &QCoreApplication::aboutToQuit, cleanUp);

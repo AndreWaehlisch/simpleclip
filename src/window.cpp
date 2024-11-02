@@ -10,6 +10,7 @@
 #include <QPixmap>
 #include <QFileInfo>
 #include <QMessageBox>
+#include <QTextStream>
 
 #include "window.h"
 
@@ -19,8 +20,10 @@
     #include "native_x11.h"
 #endif
 
-#define WINDOW_WIDTH 300 // total width of window (in px)
-#define WINDOW_HEIGHT 500 // total height of window
+#define WINDOW_HEIGHT 500 // total height of window (in px)
+#define WINDOW_WIDTH 400 // total width of window
+#define TABLE_WIDTH1 250 // width of first column
+#define TABLE_WIDTH2 (WINDOW_WIDTH - TABLE_WIDTH1) // width of second column
 #define IMAGEHEIGHT 120 // default height of images; also the maximum height of each row
 #define MAXROWS 55 // maximum number of rows our QTableWidget will grow to
 
@@ -45,7 +48,9 @@ Window::Window() : QWidget(nullptr)
     historyTable->setSelectionMode(QAbstractItemView::SingleSelection);
     const QStringList labels = { tr("Content"), tr("Timestamp") };
     historyTable->setHorizontalHeaderLabels(labels);
-    historyTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    historyTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    historyTable->horizontalHeader()->resizeSection(0, TABLE_WIDTH1);
+    historyTable->horizontalHeader()->resizeSection(1, TABLE_WIDTH2);
 
     trayMenu = new QMenu(this);
     trayMenu->addAction(windowTitle())->setDisabled(true); // first (disabled) action is a header (=our name)
@@ -249,7 +254,7 @@ void Window::clipboard_updated()
     const QStringList clipboard_mimeformats = clipboard_mimedata->formats();
 
     if (clipboard_mimeformats.isEmpty())
-        return; //TODO: if last was not empty, but the system cleared the clipboard (it is now empty), we should display that
+        return; //TODO: if last was not empty, but the system cleared the clipboard (it is now empty), should we display that?
 
     const QString firstFormat = clipboard_mimeformats.first();
     const QByteArray clipboard_firstByteArray = clipboard_mimedata->data(firstFormat);
@@ -274,50 +279,57 @@ void Window::clipboard_updated()
         QTableWidgetItem *entry = new QTableWidgetItem();
         entry->setFlags(entry->flags() ^ Qt::ItemIsEditable);
 
+
+        QPixmap pixmap; // set to an image when we find one (otherwise this remains empty)
+        QString fileLabel; // text displayed next to an item if it has an icon (i.e. for files)
+        QString filesTooltip; // optional tooltip with list of file names
+        QList<QString> matchesList;
+
         // first, check if image
-        QPixmap pixmap;
         if (clipboard_mimedata->hasImage()) {
             const QImage image = clipboard->image(QClipboard::Clipboard);
             pixmap = QPixmap::fromImage(image);
         } else if (clipboard_mimedata->hasText()) {
             const QString clipboardtext = clipboard->text();
             QRegularExpressionMatchIterator matches = regex.globalMatch(clipboardtext);
-            QRegularExpressionMatch firstMatch;
 
-            int numMatches = 0;
+            while (matches.hasNext()) {
+                matchesList.append(matches.next().captured(1));
 
-            if (matches.hasNext()) {
-                numMatches += 1;
-                firstMatch = matches.next();
+                QTextStream(&filesTooltip) << matchesList.last();
 
                 if (matches.hasNext())
-                    numMatches += 1;
+                    QTextStream(&filesTooltip) << "\n";
             }
 
-            qDebug() << "NUM Regex Matches:" << numMatches << firstMatch;
+            const int numMatches = matchesList.length();
 
             if (numMatches > 1) {
                 // handle a list of files in the format "file:///C:/....file:///C:/...."
                 pixmap = foldersPixmap;
+                QTextStream(&fileLabel) << "(" << numMatches << " files)";
             } else if (numMatches == 1) {
                 // handle (single) files in the format "file:///C:/...."
-                const QString cutText = firstMatch.captured(1);
+                const QString cutText = matchesList[0];
                 const QFileInfo fileInfo(cutText);
 
                 if (fileInfo.exists()) {
+                    // TOOD: open file in txt editor, or even better: on right-click show popup menu to either open in txt editor / open location in explorer
                     const QImage image(cutText);
+
                     if (!image.isNull()) {
                         pixmap = QPixmap::fromImage(image);
                     } else {
                         // try to display custom image for non-image files
                         const QIcon icon = iconDB.icon(fileInfo);
+
                         if (!icon.isNull()) {
                             pixmap = icon.pixmap(IMAGEHEIGHT);
-                            // TODO: also display text (=file path / filename?) on top
-                            // https://forum.qt.io/topic/121994/adding-multi-line-multi-color-text-on-top-of-qimage
-                            // TOOD: also open file in txt editor, or even better: on right-click show popup menu to either open in txt editor / open location in explorer
                         }
                     }
+
+                    if (!pixmap.isNull())
+                        fileLabel = fileInfo.fileName();
                 }
             }
         }
@@ -325,9 +337,15 @@ void Window::clipboard_updated()
         // if it is an image then display it, otherwise handle as text
         if (!pixmap.isNull()) {
             entry->setData(Qt::DecorationRole, pixmap.scaledToHeight(IMAGEHEIGHT));
+
+            if (!fileLabel.isEmpty())
+                entry->setData(Qt::DisplayRole, fileLabel);
+
+            if (!filesTooltip.isEmpty())
+                entry->setData(Qt::ToolTipRole, filesTooltip);
         } else {
             if (clipboard_mimedata->hasHtml()) {
-                // TODO: handle URL by showing a firefox button
+                // TODO: handle URL by showing a firefox button or similiar
             }
 
             entry->setText(clipboard->text());

@@ -11,13 +11,23 @@
     #error Must be on Linux at this point
 #endif
 
+#include <xcb/xproto.h>
+#include <xcb/xcb_keysyms.h>
+
+// hotkey ID's, see "xmodmap -pke"
+enum HotkeyID {
+    hotkey_down = XK_v,
+    hotkey_up = XK_c,
+};
+
+
 class nativeevent_x11 : public QAbstractNativeEventFilter
 {
 private:
     Window *window;
 public:
     nativeevent_x11(Window *window);
-    bool nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result) override;
+    bool nativeEventFilter(const QByteArray &, void *, qintptr *) override;
 };
 
 void forceToFront(Window *window);
