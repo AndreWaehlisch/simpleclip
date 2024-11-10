@@ -14,6 +14,7 @@
     static BOOL register_hotkey_up_ok = false;
 #else
     #include "native_x11.h"
+    using namespace QNativeInterface;
 #endif
 
 void cleanUp()
@@ -60,11 +61,19 @@ int main(int argc, char *argv[])
     nativeevent_x11 filter(&window);
     app.installNativeEventFilter(&filter);
 
-    if (auto *x11Application = QGuiApplication::nativeInterface<QNativeInterface::QX11Application>()) {
+    if (auto *x11Application = app.nativeInterface<QX11Application>()) {
         xcb_connection_t *connection = x11Application->connection();
-        xcb_void_cookie_t cookie = xcb_grab_key(connection, 1, root, XCB_MOD_MASK_1 | XCB_MOD_MASK_4, keycodes[0], XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC);
-        // https://manpages.ubuntu.com/manpages/focal/man3/xcb_grab_key.3.html
-        // https://doc.qt.io/qt-6/extras-changes-qt6.html
+        xcb_screen_t *screen = xcb_setup_roots_iterator(xcb_get_setup(connection)).data;
+        xcb_window_t root = screen->root;
+        xcb_key_symbols_t *keysyms = xcb_key_symbols_alloc(connection);
+        xcb_keycode_t keycode_down = *xcb_key_symbols_get_keycode(keysyms, hotkey_down);
+        xcb_keycode_t keycode_up = *xcb_key_symbols_get_keycode(keysyms, hotkey_up);
+        xcb_key_symbols_free(keysyms);
+
+        xcb_grab_key(connection, 1, root, XCB_MOD_MASK_1 | XCB_MOD_MASK_4, keycode_down, XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC);
+        xcb_grab_key(connection, 1, root, XCB_MOD_MASK_1 | XCB_MOD_MASK_4, keycode_up, XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC);
+    } else {
+        qDebug() << "COULD NOT GRAB X11 native interface!";
     }
 #endif
 

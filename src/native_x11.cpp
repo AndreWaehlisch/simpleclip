@@ -20,10 +20,10 @@ bool nativeevent_x11::nativeEventFilter(const QByteArray &eventType, void *messa
         const xcb_key_press_event_t keyEvent = *static_cast<xcb_key_press_event_t *>(message);
 
         switch (keyEvent.detail) {
-hotkey_up:
+        hotkey_up:
             qDebug() << "Test EventFilter UPKEY" << msg;
             break;
-hotkey_down:
+        hotkey_down:
             qDebug() << "Test EventFilter DOWNKEY" << msg;
             break;
         default:

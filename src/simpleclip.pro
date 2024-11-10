@@ -13,7 +13,7 @@ win32 {
     HEADERS += native_win.h
     SOURCES += native_win.cpp
 } else:linux {
-    LIBS += -lxcb
+    LIBS += -lxcb -lxcb-keysyms
     HEADERS += native_x11.h
     SOURCES += native_x11.cpp
 } else {
