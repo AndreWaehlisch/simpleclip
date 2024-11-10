@@ -13,6 +13,7 @@
 
 #include <xcb/xproto.h>
 #include <xcb/xcb_keysyms.h>
+#include <X11/keysym.h>
 
 // hotkey ID's, see "xmodmap -pke"
 enum HotkeyID {
