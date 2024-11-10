@@ -4,15 +4,13 @@
 #include <QWidget>
 #include <QClipboard>
 #include <QTableWidget>
-#include <QTableWidgetItem>
 #include <QPushButton>
 #include <QCloseEvent>
 #include <QPixmap>
 #include <QFileIconProvider>
-#include <QSystemTrayIcon>
 #include <QMenu>
-#include <QTimer>
 #include <QRegularExpression>
+#include <QSystemTrayIcon>
 
 #include <QDebug>
 
@@ -45,12 +43,10 @@ private:
     QPixmap foldersPixmap;
     QTableWidget *historyTable;
     QClipboard *clipboard;
-    QSystemTrayIcon *tray;
     QMenu *trayMenu;
-    QTimer myTimer;
     size_t last_hash;
     bool clipboardUpdate = true; // only parse updates from outside our program
-    QRegularExpression regex = QRegularExpression(R"(^file:///(.+)$)", QRegularExpression::MultilineOption | QRegularExpression::InvertedGreedinessOption);
+    const QRegularExpression regex = QRegularExpression(R"(^file:///(.+)$)", QRegularExpression::MultilineOption | QRegularExpression::InvertedGreedinessOption);
 
     QPushButton *button_up;
     QPushButton *button_down;

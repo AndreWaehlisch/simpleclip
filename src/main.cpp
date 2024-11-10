@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
         window.restoreGeometry(settings.value("window_geometry").toByteArray());
 
 #ifdef Q_OS_WIN
-    // install native event filter for MS Windows so we get every hotkey message (even if we are for example minimized)
+    // install native event filter for MS Windows so we get every hotkey message (even if we are, for example, minimized)
     nativeevent_win filter = nativeevent_win(&window);
     app.installNativeEventFilter(&filter);
 
@@ -53,9 +53,8 @@ int main(int argc, char *argv[])
     register_hotkey_up_ok = RegisterHotKey(NULL, hotkey_up, MOD_WIN | MOD_ALT | MOD_NOREPEAT, 0x43); // WIN + ALT + c
 
     if ((!register_hotkey_down_ok) || (!register_hotkey_up_ok)) {
-        DWORD error = GetLastError();
-        qDebug() << "RegisterHotKey FAILED!" << error;
-        // TODO: handle this error (may probably happen when other program already has this hotkey registered?)
+        qDebug() << "RegisterHotKey FAILED!";
+        // TODO: handle this error (may happen when other program already has this hotkey registered)
     }
 #else
     nativeevent_x11 filter(&window);

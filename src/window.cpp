@@ -11,6 +11,8 @@
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QTextStream>
+#include <QTimer>
+#include <QTableWidgetItem>
 
 #include "window.h"
 
@@ -22,10 +24,9 @@
 
 #define WINDOW_HEIGHT 500 // total height of window (in px)
 #define WINDOW_WIDTH 400 // total width of window
-#define TABLE_WIDTH1 250 // width of first column
-#define TABLE_WIDTH2 (WINDOW_WIDTH - TABLE_WIDTH1) // width of second column
+#define TABLE_WIDTH1 270 // width of first column
 #define IMAGEHEIGHT 120 // default height of images; also the maximum height of each row
-#define MAXROWS 55 // maximum number of rows our QTableWidget will grow to
+#define MAXROWS 150 // maximum number of rows our QTableWidget will grow to
 
 Window::Window() : QWidget(nullptr)
 {
@@ -46,11 +47,9 @@ Window::Window() : QWidget(nullptr)
     historyTable->setSortingEnabled(false);
     historyTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     historyTable->setSelectionMode(QAbstractItemView::SingleSelection);
+    historyTable->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     const QStringList labels = { tr("Content"), tr("Timestamp") };
     historyTable->setHorizontalHeaderLabels(labels);
-    historyTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-    historyTable->horizontalHeader()->resizeSection(0, TABLE_WIDTH1);
-    historyTable->horizontalHeader()->resizeSection(1, TABLE_WIDTH2);
 
     trayMenu = new QMenu(this);
     trayMenu->addAction(windowTitle())->setDisabled(true); // first (disabled) action is a header (=our name)
@@ -64,7 +63,7 @@ Window::Window() : QWidget(nullptr)
     trayMenu->addSeparator();
     trayMenu->addAction(tr("Exit"), this, &Window::close);
 
-    tray = new QSystemTrayIcon(mainIcon, this);
+    QSystemTrayIcon *tray = new QSystemTrayIcon(mainIcon, this);
     connect(tray, &QSystemTrayIcon::activated, this, &Window::tray_clicked);
     tray->setContextMenu(trayMenu);
     tray->show();
@@ -88,14 +87,20 @@ Window::Window() : QWidget(nullptr)
     mainLayout->addWidget(button_clear, 1, 3);
 
     setLayout(mainLayout);
+    historyTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    historyTable->horizontalHeader()->resizeSection(0, TABLE_WIDTH1);
+    historyTable->horizontalHeader()->resizeSection(1, historyTable->horizontalHeader()->width() - TABLE_WIDTH1);
 
     clipboard = QGuiApplication::clipboard();
     clipboard_updated();
     connect(clipboard, &QClipboard::dataChanged, this, &Window::clipboard_updated);
 
-    connect(&myTimer, &QTimer::timeout, this, &Window::myTimerEvent);
-    myTimer.setInterval(200);
-    myTimer.start();
+    QTimer *myTimer = new QTimer(this);
+    connect(myTimer, &QTimer::timeout, this, &Window::myTimerEvent);
+    myTimer->setInterval(200);
+    myTimer->start();
+
+    connect(historyTable, &QTableWidget::cellClicked, this, &Window::setNewClipboard);
 }
 
 inline void Window::myTimerEvent()
@@ -107,9 +112,8 @@ QString Window::trimText(const QString fullStr)
 {
     QString result = fullStr.simplified();
 
-    if (result.length() > 30) {
+    if (result.length() > 30)
         result = result.left(27) + "...";
-    }
 
     return result;
 }
@@ -117,6 +121,7 @@ QString Window::trimText(const QString fullStr)
 void Window::tray_clicked(QSystemTrayIcon::ActivationReason reason)
 {
     if (reason == QSystemTrayIcon::Trigger) {
+        qDebug() << "left-click on tray";
         activateWindow();
     } else if (reason == QSystemTrayIcon::Context) {
         qDebug() << "right-click on tray";
@@ -130,6 +135,7 @@ void Window::tray_clicked(QSystemTrayIcon::ActivationReason reason)
 
         qDebug() << "row:" << row;
 
+        // TOOD: simplify this logic and perhaps show more items
         if (numRows == 0) {
             action1->setVisible(false);
             action2->setVisible(false);
@@ -254,7 +260,7 @@ void Window::clipboard_updated()
     const QStringList clipboard_mimeformats = clipboard_mimedata->formats();
 
     if (clipboard_mimeformats.isEmpty())
-        return; //TODO: if last was not empty, but the system cleared the clipboard (it is now empty), should we display that?
+        return;
 
     const QString firstFormat = clipboard_mimeformats.first();
     const QByteArray clipboard_firstByteArray = clipboard_mimedata->data(firstFormat);
@@ -265,12 +271,11 @@ void Window::clipboard_updated()
         last_hash = clipboard_hash;
         qDebug() << "RECEIVE:" << clipboard->text() << clipboard_hash << clipboard_mimedata << clipboard_mimedata->hasImage() << firstFormat;
         qDebug() << "FORMATLIST:" << clipboard_mimeformats;
-        int rowCount = historyTable->rowCount();
+        const int rowCount = historyTable->rowCount();
 
         // make space for a new row if already maxed out
-        if (rowCount >= MAXROWS) {
+        if (rowCount >= MAXROWS)
             historyTable->removeRow(rowCount - 1);
-        }
 
         // create new row
         historyTable->insertRow(0);

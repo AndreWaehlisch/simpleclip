@@ -22,7 +22,7 @@ class nativeevent_win : public QAbstractNativeEventFilter
 private:
     Window *window;
 public:
-    nativeevent_win(Window *window);
+    nativeevent_win(Window *const window);
     bool nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result) override;
 };
 

@@ -26,7 +26,7 @@ class nativeevent_x11 : public QAbstractNativeEventFilter
 private:
     Window *window;
 public:
-    nativeevent_x11(Window *window);
+    nativeevent_x11(Window *const window);
     bool nativeEventFilter(const QByteArray &, void *, qintptr *) override;
 };
 

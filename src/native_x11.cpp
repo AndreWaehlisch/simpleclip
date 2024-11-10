@@ -42,7 +42,7 @@ hotkey_down:
 
 
 // check if Win key is down and if it is force the window to the front
-void forceToFront(Window *window)
+void forceToFront(Window *const window)
 {
     Q_UNUSED(window)
     // TODO
