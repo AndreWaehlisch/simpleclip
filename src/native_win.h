@@ -21,11 +21,13 @@ class nativeevent_win : public QAbstractNativeEventFilter
 {
 private:
     Window *window;
+
 public:
-    nativeevent_win(Window *const window);
-    bool nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result) override;
+    nativeevent_win(Window *const);
+    bool nativeEventFilter(const QByteArray &, void *, qintptr *) override;
+    static bool raisedWindow;
 };
 
-void forceToFront(Window *window);
+void forceToFront(Window *);
 
 #endif // NATIVE_WIN_H

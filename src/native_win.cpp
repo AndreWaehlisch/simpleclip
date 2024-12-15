@@ -4,6 +4,8 @@
 
 #include <QDebug>
 
+bool nativeevent_win::raisedWindow = false;
+
 nativeevent_win::nativeevent_win(Window *window)
 {
     this->window = window;
@@ -26,10 +28,6 @@ bool nativeevent_win::nativeEventFilter(const QByteArray &eventType, void *messa
             qDebug() << "UP Key";
             window->button_up_clicked();
             return true;
-        default:
-            // should never happen
-            qDebug() << "PANIC";
-            break;
         }
     }
 
@@ -45,8 +43,13 @@ void forceToFront(Window *const window)
     const bool isForeground = (foreGroundWindowID == hwnd);
 
     if (!isForeground && winPressed) {
+        nativeevent_win::raisedWindow = true;
         SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
         SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
         qDebug() << "Raised window";
+    } else if (nativeevent_win::raisedWindow && !winPressed) {
+        SetWindowPos(hwnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+        nativeevent_win::raisedWindow = false;
+        qDebug() << "Lowered window";
     }
 }

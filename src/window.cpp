@@ -33,9 +33,7 @@ Window::Window() : QWidget(nullptr)
     setWindowTitle("simpleclip");
 
     const QIcon mainIcon(":/icon.ico");
-    const QIcon webIcon(":/web.ico");
     const QIcon foldersIcon(":/folders.ico");
-    webPixmap = webIcon.pixmap(IMAGEHEIGHT);
     foldersPixmap = foldersIcon.pixmap(IMAGEHEIGHT);
 
     const QSize windowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -270,7 +268,6 @@ void Window::clipboard_updated()
     if (clipboard_hash != last_hash) {
         last_hash = clipboard_hash;
         qDebug() << "RECEIVE:" << clipboard->text() << clipboard_hash << clipboard_mimedata << clipboard_mimedata->hasImage() << firstFormat;
-        qDebug() << "FORMATLIST:" << clipboard_mimeformats;
         const int rowCount = historyTable->rowCount();
 
         // make space for a new row if already maxed out
@@ -283,7 +280,6 @@ void Window::clipboard_updated()
         // create new item
         QTableWidgetItem *entry = new QTableWidgetItem();
         entry->setFlags(entry->flags() ^ Qt::ItemIsEditable);
-
 
         QPixmap pixmap; // set to an image when we find one (otherwise this remains empty)
         QString fileLabel; // text displayed next to an item if it has an icon (i.e. for files)

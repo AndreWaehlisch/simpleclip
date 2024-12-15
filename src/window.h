@@ -39,7 +39,6 @@ private slots:
 
 private:
     const QFileIconProvider iconDB;
-    QPixmap webPixmap;
     QPixmap foldersPixmap;
     QTableWidget *historyTable;
     QClipboard *clipboard;
