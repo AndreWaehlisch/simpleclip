@@ -11,9 +11,10 @@
     #error Must be on Linux at this point
 #endif
 
-#include <xcb/xproto.h>
-#include <xcb/xcb_keysyms.h>
+#define Window mask_Window
+#include <X11/Xlib.h>
 #include <X11/keysym.h>
+#undef Window
 
 // hotkey ID's, see "xmodmap -pke"
 enum HotkeyID {
@@ -25,10 +26,16 @@ enum HotkeyID {
 class nativeevent_x11 : public QAbstractNativeEventFilter
 {
 private:
-    Window *window;
+    Window *const window;
+
 public:
-    nativeevent_x11(Window *const window);
+    nativeevent_x11(Window *const window) : window(window) {}
+
     bool nativeEventFilter(const QByteArray &, void *, qintptr *) override;
+    static bool raisedWindow;
+    KeyCode keyCode_down;
+    KeyCode keyCode_up;
+
 };
 
 void forceToFront(Window *window);

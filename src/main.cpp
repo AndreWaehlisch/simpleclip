@@ -2,6 +2,7 @@
 #include <QApplication>
 #include <QObject>
 #include <QSettings>
+#include <QProcessEnvironment>
 
 #include "window.h"
 
@@ -9,24 +10,28 @@
     #include <qt_windows.h>
     #include "native_win.h"
 
-    // TODO: handle variable type for Linux
     static BOOL register_hotkey_down_ok = false;
     static BOOL register_hotkey_up_ok = false;
+
+    void cleanUp()
+    {
+        // unregister hotkeys we requested with MS Windows
+        if (register_hotkey_down_ok)
+            UnregisterHotKey(NULL, hotkey_down);
+        if (register_hotkey_up_ok)
+            UnregisterHotKey(NULL, hotkey_up);
+    }
 #else
     #include "native_x11.h"
     using namespace QNativeInterface;
-#endif
 
-void cleanUp()
-{
-#ifdef Q_OS_WIN
-    // unregister hotkeys we requested with MS Windows
-    if (register_hotkey_down_ok)
-        UnregisterHotKey(NULL, hotkey_down);
-    if (register_hotkey_up_ok)
-        UnregisterHotKey(NULL, hotkey_up);
+    void cleanUp()
+    {
+        //TODO
+        //if (register_hotkey_down_ok)
+        //    XUngrabKey()
+    }
 #endif
-}
 
 // TODO: implement a simple search
 int main(int argc, char *argv[])
@@ -34,6 +39,9 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     app.setOrganizationName("AndreWaehlisch");
     app.setApplicationName("simpleclip");
+
+    const QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+    const bool mod_alt = (environment.value("SIMPLECAL_MODALT", "1") == "1"); // set to anything else than "1" to disable using alt
 
     const QIcon mainIcon(":/icon.ico");
     Window window;
@@ -50,28 +58,36 @@ int main(int argc, char *argv[])
     nativeevent_win filter = nativeevent_win(&window);
     app.installNativeEventFilter(&filter);
 
-    register_hotkey_down_ok = RegisterHotKey(NULL, hotkey_down, MOD_WIN | MOD_ALT | MOD_NOREPEAT, 0x56); // WIN + ALT + v
-    register_hotkey_up_ok = RegisterHotKey(NULL, hotkey_up, MOD_WIN | MOD_ALT | MOD_NOREPEAT, 0x43); // WIN + ALT + c
+    UINT modifiers = MOD_WIN;
+
+    if (mod_alt)
+        modifiers |= MOD_ALT;
+
+    register_hotkey_down_ok = RegisterHotKey(NULL, hotkey_down, modifiers, 0x56); // WIN + ALT + v
+    register_hotkey_up_ok = RegisterHotKey(NULL, hotkey_up, modifiers, 0x43); // WIN + ALT + c
 
     if ((!register_hotkey_down_ok) || (!register_hotkey_up_ok)) {
         qDebug() << "RegisterHotKey FAILED!";
-        // TODO: handle this error (may happen when other program already has this hotkey registered)
+        // TODO: handle this error? (may happen when other program already has this hotkey registered)
     }
 #else
     nativeevent_x11 filter(&window);
     app.installNativeEventFilter(&filter);
 
     if (auto *x11Application = app.nativeInterface<QX11Application>()) {
-        xcb_connection_t *connection = x11Application->connection();
-        xcb_screen_t *screen = xcb_setup_roots_iterator(xcb_get_setup(connection)).data;
-        xcb_window_t root = screen->root;
-        xcb_key_symbols_t *keysyms = xcb_key_symbols_alloc(connection);
-        xcb_keycode_t keycode_down = *xcb_key_symbols_get_keycode(keysyms, hotkey_down);
-        xcb_keycode_t keycode_up = *xcb_key_symbols_get_keycode(keysyms, hotkey_up);
-        xcb_key_symbols_free(keysyms);
+        Display *x11Display = x11Application->display();
 
-        xcb_grab_key(connection, 1, root, XCB_MOD_MASK_1 | XCB_MOD_MASK_4, keycode_down, XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC);
-        xcb_grab_key(connection, 1, root, XCB_MOD_MASK_1 | XCB_MOD_MASK_4, keycode_up, XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC);
+        filter.keyCode_down = XKeysymToKeycode(x11Display, hotkey_down);
+        filter.keyCode_up = XKeysymToKeycode(x11Display, hotkey_up);
+
+        auto root = DefaultRootWindow(x11Display); //TODO rename variable type to Window
+
+        unsigned int modifiers = Mod4Mask;
+        if (mod_alt)
+            modifiers |= Mod1Mask;
+
+        XGrabKey(x11Display, filter.keyCode_down, modifiers, root, True, GrabModeAsync, GrabModeAsync);
+        XGrabKey(x11Display, filter.keyCode_up, modifiers, root, True, GrabModeAsync, GrabModeAsync);
     } else {
         qDebug() << "COULD NOT GRAB X11 native interface!";
     }
