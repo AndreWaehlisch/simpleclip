@@ -120,6 +120,7 @@ void Window::tray_clicked(QSystemTrayIcon::ActivationReason reason)
 {
     if (reason == QSystemTrayIcon::Trigger) {
         qDebug() << "left-click on tray";
+        showNormal();
         activateWindow();
     } else if (reason == QSystemTrayIcon::Context) {
         qDebug() << "right-click on tray";
