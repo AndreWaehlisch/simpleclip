@@ -31,13 +31,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: jurplel/install-qt-action@v4
-        with:
-          version: "6.8.*"
       - name: build and release
         run: |
           sudo apt update
-          sudo apt install -y libx11-dev x11proto-dev libxcb1-dev
+          sudo apt install -y libx11-dev x11proto-dev libxcb1-dev qt6-base-dev qt6-tools-dev
           mkdir build
           cd build
           qmake6 ../src/simpleclip.pro
