@@ -20,7 +20,7 @@ jobs:
           qmake ../src/simpleclip.pro
           nmake
           windeployqt --release --no-translations release/simpleclip.exe
-          tar -a -c -f release.zip release
+          tar -a -c -f release_windows.zip release
           python3 -c "from datetime import datetime; print(datetime.today().isoformat().replace(':', '_'))" >> date.txt
           gh release create "$(cat date.txt)_windows" release_windows.zip
         env:
@@ -39,7 +39,7 @@ jobs:
           cd build
           qmake6 ../src/simpleclip.pro
           make
-          tar -a -c -f release.zip simpleclip
+          tar -a -c -f release_x11.zip simpleclip
           python3 -c "from datetime import datetime; print(datetime.today().isoformat().replace(':', '_'))" >> date.txt
           gh release create "$(cat date.txt)_x11" release_x11.zip
         env:
