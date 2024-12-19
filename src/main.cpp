@@ -74,15 +74,16 @@ int main(int argc, char *argv[])
     nativeevent_x11 filter(&window);
     app.installNativeEventFilter(&filter);
 
-    if (auto *x11Application = app.nativeInterface<QX11Application>()) {
+    if (const QX11Application *x11Application = app.nativeInterface<QX11Application>()) {
         Display *x11Display = x11Application->display();
 
         filter.keyCode_down = XKeysymToKeycode(x11Display, hotkey_down);
         filter.keyCode_up = XKeysymToKeycode(x11Display, hotkey_up);
 
-        auto root = DefaultRootWindow(x11Display); //TODO rename variable type to Window
+        const Window root = DefaultRootWindow(x11Display);
 
         unsigned int modifiers = Mod4Mask;
+
         if (mod_alt)
             modifiers |= Mod1Mask;
 

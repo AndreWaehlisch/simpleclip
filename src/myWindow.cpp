@@ -318,7 +318,6 @@ void myWindow::clipboard_updated()
                 const QFileInfo fileInfo(cutText);
 
                 if (fileInfo.exists()) {
-                    // TOOD: open file in txt editor, or even better: on right-click show popup menu to either open in txt editor / open location in explorer
                     const QImage image(cutText);
 
                     if (!image.isNull()) {
