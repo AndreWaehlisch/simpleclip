@@ -1,0 +1,44 @@
+name: build-and-release-qt-program
+
+on: push
+
+jobs:
+  build-and-release-qt-program-windows:
+    permissions:
+      contents: write
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jurplel/install-qt-action@v4
+      - uses: ilammy/msvc-dev-cmd@v1.13.0
+      - name: build and release
+        run: |
+          mkdir build
+          cd build
+          qmake ../src/simplecal.pro
+          nmake
+          windeployqt --release --no-translations release/simplecal.exe
+          tar -a -c -f release.zip release
+          python3 -c "from datetime import datetime; print(datetime.today().isoformat().replace(':', '_'))" >> date.txt
+          gh release create "$(cat date.txt)_windows" release.zip
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  build-and-release-qt-program-x11:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jurplel/install-qt-action@v4
+      - name: build and release
+        run: |
+          apt install -y libx11-dev x11proto-dev libxcb1-dev
+          mkdir build
+          cd build
+          qmake ../src/simplecal.pro
+          make
+          tar -a -c -f release.zip simpleclip
+          python3 -c "from datetime import datetime; print(datetime.today().isoformat().replace(':', '_'))" >> date.txt
+          gh release create "$(cat date.txt)_x11" release.zip
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
