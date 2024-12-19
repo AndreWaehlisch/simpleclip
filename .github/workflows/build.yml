@@ -30,17 +30,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: jurplel/install-qt-action@v4
-      - run: |
-          ls
-          pwd
-      - uses: mxschmitt/action-tmate@v3
       - name: build and release
         run: |
           sudo apt update
           sudo apt install -y libx11-dev x11proto-dev libxcb1-dev
           mkdir build
           cd build
-          qmake ../src/simplecal.pro
+          qmake ../src/simpleclip.pro
           make
           tar -a -c -f release.zip simpleclip
           python3 -c "from datetime import datetime; print(datetime.today().isoformat().replace(':', '_'))" >> date.txt
