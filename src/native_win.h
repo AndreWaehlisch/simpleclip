@@ -5,7 +5,7 @@
 #include <QAbstractNativeEventFilter>
 #include <QByteArray>
 
-#include "window.h"
+#include "myWindow.h"
 
 #ifndef Q_OS_WIN
     #error Must be on Windows at this point
@@ -20,14 +20,14 @@ enum HotkeyID {
 class nativeevent_win : public QAbstractNativeEventFilter
 {
 private:
-    Window *window;
+    myWindow *window;
 
 public:
-    nativeevent_win(Window *const);
+    nativeevent_win(myWindow *const);
     bool nativeEventFilter(const QByteArray &, void *, qintptr *) override;
     static bool raisedWindow;
 };
 
-void forceToFront(Window *);
+void forceToFront(myWindow *);
 
 #endif // NATIVE_WIN_H

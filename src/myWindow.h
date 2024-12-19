@@ -1,5 +1,5 @@
-#ifndef WINDOW_H
-#define WINDOW_H
+#ifndef MYWINDOW_H
+#define MYWINDOW_H
 
 #include <QWidget>
 #include <QClipboard>
@@ -19,12 +19,12 @@ enum clipboard_dataIDs {
     clipboardID_formats
 };
 
-class Window : public QWidget
+class myWindow : public QWidget
 {
     Q_OBJECT
 
 public:
-    Window();
+    myWindow();
 
 public slots:
     void button_up_clicked();
@@ -54,6 +54,7 @@ private:
 
     void closeEvent(QCloseEvent *) override;
     void setNewClipboard();
+    void openFileOfItem(const int, const int);
 
     static QString trimText(const QString);
 };

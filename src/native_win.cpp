@@ -6,7 +6,7 @@
 
 bool nativeevent_win::raisedWindow = false;
 
-nativeevent_win::nativeevent_win(Window *window)
+nativeevent_win::nativeevent_win(myWindow *window)
 {
     this->window = window;
 }
@@ -35,7 +35,7 @@ bool nativeevent_win::nativeEventFilter(const QByteArray &eventType, void *messa
 }
 
 // check if Win key is down and if it is force the window to the front
-void forceToFront(Window *const window)
+void forceToFront(myWindow *const window)
 {
     const bool winPressed = QGuiApplication::queryKeyboardModifiers().testFlag(Qt::MetaModifier);
     const HWND foreGroundWindowID = GetForegroundWindow();

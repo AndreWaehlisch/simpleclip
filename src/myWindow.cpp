@@ -13,8 +13,9 @@
 #include <QTextStream>
 #include <QTimer>
 #include <QTableWidgetItem>
+#include <QDesktopServices>
 
-#include "window.h"
+#include "myWindow.h"
 
 #ifdef Q_OS_WIN
     #include "native_win.h"
@@ -28,7 +29,7 @@
 #define IMAGEHEIGHT 120 // default height of images; also the maximum height of each row
 #define MAXROWS 150 // maximum number of rows our QTableWidget will grow to
 
-Window::Window() : QWidget(nullptr)
+myWindow::myWindow() : QWidget(nullptr)
 {
     setWindowTitle("simpleclip");
 
@@ -51,7 +52,7 @@ Window::Window() : QWidget(nullptr)
 
     trayMenu = new QMenu(this);
     trayMenu->addAction(windowTitle())->setDisabled(true); // first (disabled) action is a header (=our name)
-    trayMenu->addAction(tr("Clear"), this, &Window::button_clear_clicked);
+    trayMenu->addAction(tr("Clear"), this, &myWindow::button_clear_clicked);
     trayMenu->addSeparator();
 
     trayMenu->addAction("");
@@ -59,10 +60,10 @@ Window::Window() : QWidget(nullptr)
     trayMenu->addAction("");
 
     trayMenu->addSeparator();
-    trayMenu->addAction(tr("Exit"), this, &Window::close);
+    trayMenu->addAction(tr("Exit"), this, &myWindow::close);
 
     QSystemTrayIcon *tray = new QSystemTrayIcon(mainIcon, this);
-    connect(tray, &QSystemTrayIcon::activated, this, &Window::tray_clicked);
+    connect(tray, &QSystemTrayIcon::activated, this, &myWindow::tray_clicked);
     tray->setContextMenu(trayMenu);
     tray->show();
 
@@ -71,10 +72,10 @@ Window::Window() : QWidget(nullptr)
     button_delete = new QPushButton("x", this);
     button_clear = new QPushButton(tr("clear"), this);
 
-    connect(button_up, &QAbstractButton::clicked, this, &Window::button_up_clicked);
-    connect(button_down, &QAbstractButton::clicked, this, &Window::button_down_clicked);
-    connect(button_delete, &QAbstractButton::clicked, this, &Window::button_delete_clicked);
-    connect(button_clear, &QAbstractButton::clicked, this, &Window::button_clear_clicked);
+    connect(button_up, &QAbstractButton::clicked, this, &myWindow::button_up_clicked);
+    connect(button_down, &QAbstractButton::clicked, this, &myWindow::button_down_clicked);
+    connect(button_delete, &QAbstractButton::clicked, this, &myWindow::button_delete_clicked);
+    connect(button_clear, &QAbstractButton::clicked, this, &myWindow::button_clear_clicked);
 
     QGridLayout *mainLayout = new QGridLayout(this);
 
@@ -91,22 +92,23 @@ Window::Window() : QWidget(nullptr)
 
     clipboard = QGuiApplication::clipboard();
     clipboard_updated();
-    connect(clipboard, &QClipboard::dataChanged, this, &Window::clipboard_updated);
+    connect(clipboard, &QClipboard::dataChanged, this, &myWindow::clipboard_updated);
 
     QTimer *myTimer = new QTimer(this);
-    connect(myTimer, &QTimer::timeout, this, &Window::myTimerEvent);
+    connect(myTimer, &QTimer::timeout, this, &myWindow::myTimerEvent);
     myTimer->setInterval(200);
     myTimer->start();
 
-    connect(historyTable, &QTableWidget::cellClicked, this, &Window::setNewClipboard);
+    connect(historyTable, &QTableWidget::cellClicked, this, &myWindow::setNewClipboard);
+    connect(historyTable, &QTableWidget::cellDoubleClicked, this, &myWindow::openFileOfItem);
 }
 
-inline void Window::myTimerEvent()
+inline void myWindow::myTimerEvent()
 {
     forceToFront(this);
 }
 
-QString Window::trimText(const QString fullStr)
+QString myWindow::trimText(const QString fullStr)
 {
     QString result = fullStr.simplified();
 
@@ -116,7 +118,7 @@ QString Window::trimText(const QString fullStr)
     return result;
 }
 
-void Window::tray_clicked(QSystemTrayIcon::ActivationReason reason)
+void myWindow::tray_clicked(QSystemTrayIcon::ActivationReason reason)
 {
     if (reason == QSystemTrayIcon::Trigger) {
         qDebug() << "left-click on tray";
@@ -167,7 +169,7 @@ void Window::tray_clicked(QSystemTrayIcon::ActivationReason reason)
                 action2->setText(trimText(historyTable->item(row + 1, 0)->text()));
                 action2->setDisabled(false);
                 disconnect(action2, &QAction::triggered, nullptr, nullptr);
-                connect(action2, &QAction::triggered, this, &Window::button_down_clicked);
+                connect(action2, &QAction::triggered, this, &myWindow::button_down_clicked);
             } else {
                 QFont font1 = action1->font();
                 font1.setBold(false);
@@ -175,7 +177,7 @@ void Window::tray_clicked(QSystemTrayIcon::ActivationReason reason)
                 action1->setText(trimText(historyTable->item(row - 1, 0)->text()));
                 action1->setDisabled(false);
                 disconnect(action1, &QAction::triggered, nullptr, nullptr);
-                connect(action1, &QAction::triggered, this, &Window::button_up_clicked);
+                connect(action1, &QAction::triggered, this, &myWindow::button_up_clicked);
 
                 QFont font2 = action2->font();
                 font2.setBold(true);
@@ -201,7 +203,7 @@ void Window::tray_clicked(QSystemTrayIcon::ActivationReason reason)
                 action2->setText(trimText(historyTable->item(row + 1, 0)->text()));
                 action2->setDisabled(false);
                 disconnect(action2, &QAction::triggered, nullptr, nullptr);
-                connect(action2, &QAction::triggered, this, &Window::button_down_clicked);
+                connect(action2, &QAction::triggered, this, &myWindow::button_down_clicked);
 
                 action3->setVisible(false);
             } else if ((row > 0) && (row + 1 < numRows)) {
@@ -211,7 +213,7 @@ void Window::tray_clicked(QSystemTrayIcon::ActivationReason reason)
                 action1->setText(trimText(historyTable->item(row - 1, 0)->text()));
                 action1->setDisabled(false);
                 disconnect(action1, &QAction::triggered, nullptr, nullptr);
-                connect(action1, &QAction::triggered, this, &Window::button_up_clicked);
+                connect(action1, &QAction::triggered, this, &myWindow::button_up_clicked);
 
                 QFont font2 = action2->font();
                 font2.setBold(true);
@@ -225,7 +227,7 @@ void Window::tray_clicked(QSystemTrayIcon::ActivationReason reason)
                 action3->setText(trimText(historyTable->item(row + 1, 0)->text()));
                 action3->setDisabled(false);
                 disconnect(action3, &QAction::triggered, nullptr, nullptr);
-                connect(action3, &QAction::triggered, this, &Window::button_down_clicked);
+                connect(action3, &QAction::triggered, this, &myWindow::button_down_clicked);
             } else {
                 QFont font1 = action1->font();
                 font1.setBold(false);
@@ -233,7 +235,7 @@ void Window::tray_clicked(QSystemTrayIcon::ActivationReason reason)
                 action1->setText(trimText(historyTable->item(row - 1, 0)->text()));
                 action1->setDisabled(false);
                 disconnect(action1, &QAction::triggered, nullptr, nullptr);
-                connect(action1, &QAction::triggered, this, &Window::button_up_clicked);
+                connect(action1, &QAction::triggered, this, &myWindow::button_up_clicked);
 
                 QFont font2 = action2->font();
                 font2.setBold(true);
@@ -247,7 +249,7 @@ void Window::tray_clicked(QSystemTrayIcon::ActivationReason reason)
     }
 }
 
-void Window::clipboard_updated()
+void myWindow::clipboard_updated()
 {
     if (!clipboardUpdate) {
         clipboardUpdate = true;
@@ -386,7 +388,7 @@ void Window::clipboard_updated()
     }
 }
 
-void Window::setNewClipboard()
+void myWindow::setNewClipboard()
 {
     const QTableWidgetItem * const currentTableItem = historyTable->currentItem();
 
@@ -403,7 +405,7 @@ void Window::setNewClipboard()
     qDebug() << "updated clipboard!";
 }
 
-void Window::button_up_clicked()
+void myWindow::button_up_clicked()
 {
     const int row = historyTable->currentRow();
 
@@ -413,7 +415,7 @@ void Window::button_up_clicked()
     }
 }
 
-void Window::button_down_clicked()
+void myWindow::button_down_clicked()
 {
     const int row = historyTable->currentRow();
 
@@ -423,7 +425,7 @@ void Window::button_down_clicked()
     }
 }
 
-void Window::button_delete_clicked()
+void myWindow::button_delete_clicked()
 {
     const int row = historyTable->currentRow();
 
@@ -439,7 +441,7 @@ void Window::button_delete_clicked()
     }
 }
 
-void Window::button_clear_clicked()
+void myWindow::button_clear_clicked()
 {
     const int numRows = historyTable->rowCount();
 
@@ -455,10 +457,16 @@ void Window::button_clear_clicked()
     }
 }
 
-void Window::closeEvent(QCloseEvent *event)
+void myWindow::closeEvent(QCloseEvent *event)
 {
     QSettings settings;
     settings.setValue("window_geometry", saveGeometry());
     QWidget::closeEvent(event);
     QCoreApplication::quit(); // make sure we quit, this does not happen automatically because we use window.setWindowFlags by setting Qt::Tool
+}
+
+void myWindow::openFileOfItem(const int row, const int /* column */)
+{
+    const QTableWidgetItem *item = historyTable->item(row, 0);
+    QDesktopServices::openUrl(QUrl::fromLocalFile(item->text()));
 }

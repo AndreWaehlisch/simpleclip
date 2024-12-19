@@ -17,7 +17,7 @@ bool nativeevent_x11::nativeEventFilter(const QByteArray &eventType, void *messa
         if (msg->response_type == XCB_KEY_PRESS) {
             const xcb_key_press_event_t *keyEvent = static_cast<xcb_key_press_event_t *>(message);
 
-            if (keyEvent->detail == keyCode_down){
+            if (keyEvent->detail == keyCode_down) {
                 qDebug() << "Test EventFilter DOWNKKEY" << msg;
                 window->button_down_clicked();
                 return true;
@@ -33,7 +33,7 @@ bool nativeevent_x11::nativeEventFilter(const QByteArray &eventType, void *messa
 }
 
 // check if Win key is down and if it is force the window to the front
-void forceToFront(Window *const window)
+void forceToFront(myWindow *const window)
 {
     const bool winPressed = QGuiApplication::queryKeyboardModifiers().testFlag(Qt::MetaModifier);
     const bool isForeground = window->isActiveWindow();

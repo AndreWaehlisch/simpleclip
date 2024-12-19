@@ -4,33 +4,33 @@
 #include <QSettings>
 #include <QProcessEnvironment>
 
-#include "window.h"
+#include "myWindow.h"
 
 #ifdef Q_OS_WIN
-    #include <qt_windows.h>
-    #include "native_win.h"
+#include <qt_windows.h>
+#include "native_win.h"
 
-    static BOOL register_hotkey_down_ok = false;
-    static BOOL register_hotkey_up_ok = false;
+static BOOL register_hotkey_down_ok = false;
+static BOOL register_hotkey_up_ok = false;
 
-    void cleanUp()
-    {
-        // unregister hotkeys we requested with MS Windows
-        if (register_hotkey_down_ok)
-            UnregisterHotKey(NULL, hotkey_down);
-        if (register_hotkey_up_ok)
-            UnregisterHotKey(NULL, hotkey_up);
-    }
+void cleanUp()
+{
+    // unregister hotkeys we requested with MS Windows
+    if (register_hotkey_down_ok)
+        UnregisterHotKey(NULL, hotkey_down);
+    if (register_hotkey_up_ok)
+        UnregisterHotKey(NULL, hotkey_up);
+}
 #else
-    #include "native_x11.h"
-    using namespace QNativeInterface;
+#include "native_x11.h"
+using namespace QNativeInterface;
 
-    void cleanUp()
-    {
-        //TODO
-        //if (register_hotkey_down_ok)
-        //    XUngrabKey()
-    }
+void cleanUp()
+{
+    //TODO
+    //if (register_hotkey_down_ok)
+    //    XUngrabKey()
+}
 #endif
 
 // TODO: implement a simple search
@@ -44,12 +44,12 @@ int main(int argc, char *argv[])
     const bool mod_alt = (environment.value("SIMPLECAL_MODALT", "1") == "1"); // set to anything else than "1" to disable using alt
 
     const QIcon mainIcon(":/icon.ico");
-    Window window;
+    myWindow window;
     window.setWindowFlags(Qt::Tool); // dont show us on the taskbar
     window.setWindowIcon(mainIcon);
     window.show();
 
-    QSettings settings;
+    const QSettings settings;
     if (settings.contains("window_geometry"))
         window.restoreGeometry(settings.value("window_geometry").toByteArray());
 

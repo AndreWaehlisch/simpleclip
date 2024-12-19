@@ -5,16 +5,14 @@
 #include <QAbstractNativeEventFilter>
 #include <QByteArray>
 
-#include "window.h"
+#include "myWindow.h"
 
 #ifndef Q_OS_LINUX
     #error Must be on Linux at this point
 #endif
 
-#define Window mask_Window
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
-#undef Window
 
 // hotkey ID's, see "xmodmap -pke"
 enum HotkeyID {
@@ -26,10 +24,10 @@ enum HotkeyID {
 class nativeevent_x11 : public QAbstractNativeEventFilter
 {
 private:
-    Window *const window;
+    myWindow *const window;
 
 public:
-    nativeevent_x11(Window *const window) : window(window) {}
+    nativeevent_x11(myWindow *const window) : window(window) {}
 
     bool nativeEventFilter(const QByteArray &, void *, qintptr *) override;
     static bool raisedWindow;
@@ -38,6 +36,6 @@ public:
 
 };
 
-void forceToFront(Window *window);
+void forceToFront(myWindow *window);
 
 #endif // NATIVE_X11_H
