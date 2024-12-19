@@ -32,7 +32,7 @@ jobs:
       - uses: jurplel/install-qt-action@v4
       - run: |
           ls
-	  pwd
+          pwd
       - uses: mxschmitt/action-tmate@v3
       - name: build and release
         run: |
