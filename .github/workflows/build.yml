@@ -30,6 +30,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: jurplel/install-qt-action@v4
+      - run: |
+          ls
+	  pwd
+      - uses: mxschmitt/action-tmate@v3
       - name: build and release
         run: |
           sudo apt update
