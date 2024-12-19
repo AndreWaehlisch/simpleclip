@@ -10,7 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: jurplel/install-qt-action@v4
-        version: 6.8.*
+        with:
+          version: "6.8.*"
       - uses: ilammy/msvc-dev-cmd@v1.13.0
       - name: build and release
         run: |
@@ -31,7 +32,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: jurplel/install-qt-action@v4
-        version: 6.8.*
+        with:
+          version: "6.8.*"
       - name: build and release
         run: |
           sudo apt update
