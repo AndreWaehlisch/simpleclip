@@ -17,7 +17,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          qmake ../src/simplecal.pro
+          qmake ../src/simpleclip.pro
           nmake
           windeployqt --release --no-translations release/simplecal.exe
           tar -a -c -f release.zip release
