@@ -36,7 +36,7 @@ jobs:
           sudo apt install -y libx11-dev x11proto-dev libxcb1-dev
           mkdir build
           cd build
-          qmake ../src/simpleclip.pro
+          qmake6 ../src/simpleclip.pro
           make
           tar -a -c -f release.zip simpleclip
           python3 -c "from datetime import datetime; print(datetime.today().isoformat().replace(':', '_'))" >> date.txt
