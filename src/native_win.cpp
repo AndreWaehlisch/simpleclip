@@ -11,23 +11,22 @@ nativeevent_win::nativeevent_win(myWindow *window)
     this->window = window;
 }
 
-bool nativeevent_win::nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result)
+bool nativeevent_win::nativeEventFilter(const QByteArray &eventType, void *message, qintptr* /* result */)
 {
-    Q_UNUSED(eventType)
-    Q_UNUSED(result)
+    if (eventType == "windows_generic_MSG") {
+        const PMSG msg = static_cast<PMSG>(message);
 
-    const PMSG msg = static_cast<PMSG>(message);
-
-    if (msg->message == WM_HOTKEY) {
-        switch (msg->wParam) {
-        case hotkey_down:
-            qDebug() << "DOWN Key";
-            window->button_down_clicked();
-            return true;
-        case hotkey_up:
-            qDebug() << "UP Key";
-            window->button_up_clicked();
-            return true;
+        if (msg->message == WM_HOTKEY) {
+            switch (msg->wParam) {
+            case hotkey_down:
+                qDebug() << "DOWN Key";
+                window->button_down_clicked();
+                return true;
+            case hotkey_up:
+                qDebug() << "UP Key";
+                window->button_up_clicked();
+                return true;
+            }
         }
     }
 

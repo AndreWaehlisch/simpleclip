@@ -53,8 +53,8 @@ int main(int argc, char *argv[])
     if (settings.contains("window_geometry"))
         window.restoreGeometry(settings.value("window_geometry").toByteArray());
 
+// install native event filter so we get every hotkey message (even if we are, for example, minimized)
 #ifdef Q_OS_WIN
-    // install native event filter for MS Windows so we get every hotkey message (even if we are, for example, minimized)
     nativeevent_win filter = nativeevent_win(&window);
     app.installNativeEventFilter(&filter);
 

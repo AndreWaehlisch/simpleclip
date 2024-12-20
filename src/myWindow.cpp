@@ -124,6 +124,7 @@ void myWindow::tray_clicked(QSystemTrayIcon::ActivationReason reason)
         qDebug() << "left-click on tray";
         showNormal();
         activateWindow();
+        raise();
     } else if (reason == QSystemTrayIcon::Context) {
         qDebug() << "right-click on tray";
         const int row = historyTable->currentRow();
@@ -347,10 +348,6 @@ void myWindow::clipboard_updated()
             if (!filesTooltip.isEmpty())
                 entry->setData(Qt::ToolTipRole, filesTooltip);
         } else {
-            if (clipboard_mimedata->hasHtml()) {
-                // TODO: handle URL by showing a firefox button or similiar
-            }
-
             entry->setText(clipboard->text());
             entry->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         }
@@ -395,7 +392,7 @@ void myWindow::setNewClipboard()
     const QStringList formats = qvariant_cast<QStringList> (currentTableItem->data(clipboardID_formats));
     const QList<QByteArray> data = qvariant_cast<QList<QByteArray >> (currentTableItem->data(clipboardID_data));
 
-    for (int i = 0; i < formats.size(); i++) {
+    for (qsizetype i = 0; i < formats.size(); i++) {
         mimedata->setData(formats[i], data[i]);
     }
 

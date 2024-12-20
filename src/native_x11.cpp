@@ -1,4 +1,5 @@
 #include <xcb/xcb.h>
+
 #include <QGuiApplication>
 
 #include "native_x11.h"
@@ -7,10 +8,8 @@
 
 bool nativeevent_x11::raisedWindow = false;
 
-bool nativeevent_x11::nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result)
+bool nativeevent_x11::nativeEventFilter(const QByteArray &eventType, void *message, qintptr* /* result */)
 {
-    Q_UNUSED(result)
-
     if (eventType == "xcb_generic_event_t") {
         const xcb_generic_event_t *msg = static_cast<xcb_generic_event_t *>(message);
 
