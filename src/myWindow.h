@@ -12,8 +12,6 @@
 #include <QRegularExpression>
 #include <QSystemTrayIcon>
 
-#include <QDebug>
-
 enum clipboard_dataIDs {
     clipboardID_data = Qt::UserRole,
     clipboardID_formats
@@ -55,6 +53,7 @@ private:
     void closeEvent(QCloseEvent *) override;
     void setNewClipboard();
     void openFileOfItem(const int, const int);
+    void showWindow();
 
     static QString trimText(const QString);
 };

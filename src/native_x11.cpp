@@ -39,6 +39,7 @@ void forceToFront(myWindow *const window)
 
     if (!isForeground && winPressed) {
         nativeevent_x11::raisedWindow = true;
+        window->showNormal();
         window->setAttribute(Qt::WA_ShowWithoutActivating);
         window->setWindowFlags(window->windowFlags() | Qt::WindowStaysOnTopHint);
         window->show();

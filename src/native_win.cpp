@@ -43,6 +43,7 @@ void forceToFront(myWindow *const window)
 
     if (!isForeground && winPressed) {
         nativeevent_win::raisedWindow = true;
+        window->showNormal();
         SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
         SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
         qDebug() << "Raised window";

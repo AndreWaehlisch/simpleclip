@@ -52,14 +52,11 @@ myWindow::myWindow() : QWidget(nullptr)
 
     trayMenu = new QMenu(this);
     trayMenu->addAction(windowTitle())->setDisabled(true); // first (disabled) action is a header (=our name)
+    trayMenu->addSeparator();
+    trayMenu->addAction(tr("Show"), this, &myWindow::showWindow);
+    trayMenu->addAction(tr("Hide"), this, &myWindow::hide);
+    trayMenu->addSeparator();
     trayMenu->addAction(tr("Clear"), this, &myWindow::button_clear_clicked);
-    trayMenu->addSeparator();
-
-    trayMenu->addAction("");
-    trayMenu->addAction("")->setDisabled(true);
-    trayMenu->addAction("");
-
-    trayMenu->addSeparator();
     trayMenu->addAction(tr("Exit"), this, &myWindow::close);
 
     QSystemTrayIcon *tray = new QSystemTrayIcon(mainIcon, this);
@@ -118,135 +115,23 @@ QString myWindow::trimText(const QString fullStr)
     return result;
 }
 
+inline void myWindow::showWindow()
+{
+    showNormal();
+    activateWindow();
+    raise();
+}
+
 void myWindow::tray_clicked(QSystemTrayIcon::ActivationReason reason)
 {
     if (reason == QSystemTrayIcon::Trigger) {
-        qDebug() << "left-click on tray";
-        showNormal();
-        activateWindow();
-        raise();
+        showWindow();
     } else if (reason == QSystemTrayIcon::Context) {
-        qDebug() << "right-click on tray";
-        const int row = historyTable->currentRow();
         const int numRows = historyTable->rowCount();
-        QList<QAction *> actions = trayMenu->actions();
+        const QList<QAction *> actions = trayMenu->actions();
 
-        QAction *action1 = actions[3];
-        QAction *action2 = actions[4];
-        QAction *action3 = actions[5];
-
-        qDebug() << "row:" << row;
-
-        // TOOD: simplify this logic and perhaps show more items
-        if (numRows == 0) {
-            action1->setVisible(false);
-            action2->setVisible(false);
-            action3->setVisible(false);
-        } else if (numRows == 1) {
-            action1->setVisible(true);
-            action2->setVisible(false);
-            action3->setVisible(false);
-
-            QFont font1 = action1->font();
-            font1.setBold(true);
-            action1->setFont(font1);
-            action1->setText(trimText(historyTable->item(row, 0)->text()));
-            action1->setDisabled(true);
-        } else if (numRows == 2) {
-            action1->setVisible(true);
-            action2->setVisible(true);
-            action3->setVisible(false);
-
-            if (row == 0) {
-                QFont font1 = action1->font();
-                font1.setBold(true);
-                action1->setFont(font1);
-                action1->setText(trimText(historyTable->item(row, 0)->text()));
-                action1->setDisabled(true);
-
-                QFont font2 = action2->font();
-                font2.setBold(false);
-                action2->setFont(font2);
-                action2->setText(trimText(historyTable->item(row + 1, 0)->text()));
-                action2->setDisabled(false);
-                disconnect(action2, &QAction::triggered, nullptr, nullptr);
-                connect(action2, &QAction::triggered, this, &myWindow::button_down_clicked);
-            } else {
-                QFont font1 = action1->font();
-                font1.setBold(false);
-                action1->setFont(font1);
-                action1->setText(trimText(historyTable->item(row - 1, 0)->text()));
-                action1->setDisabled(false);
-                disconnect(action1, &QAction::triggered, nullptr, nullptr);
-                connect(action1, &QAction::triggered, this, &myWindow::button_up_clicked);
-
-                QFont font2 = action2->font();
-                font2.setBold(true);
-                action2->setFont(font2);
-                action2->setText(trimText(historyTable->item(row, 0)->text()));
-                action2->setDisabled(true);
-            }
-        } else {
-            action1->setVisible(true);
-            action2->setVisible(true);
-            action3->setVisible(true);
-
-            if (row == 0) {
-                QFont font1 = action1->font();
-                font1.setBold(true);
-                action1->setFont(font1);
-                action1->setText(trimText(historyTable->item(row, 0)->text()));
-                action1->setDisabled(true);
-
-                QFont font2 = action2->font();
-                font2.setBold(false);
-                action2->setFont(font2);
-                action2->setText(trimText(historyTable->item(row + 1, 0)->text()));
-                action2->setDisabled(false);
-                disconnect(action2, &QAction::triggered, nullptr, nullptr);
-                connect(action2, &QAction::triggered, this, &myWindow::button_down_clicked);
-
-                action3->setVisible(false);
-            } else if ((row > 0) && (row + 1 < numRows)) {
-                QFont font1 = action1->font();
-                font1.setBold(false);
-                action1->setFont(font1);
-                action1->setText(trimText(historyTable->item(row - 1, 0)->text()));
-                action1->setDisabled(false);
-                disconnect(action1, &QAction::triggered, nullptr, nullptr);
-                connect(action1, &QAction::triggered, this, &myWindow::button_up_clicked);
-
-                QFont font2 = action2->font();
-                font2.setBold(true);
-                action2->setFont(font2);
-                action2->setText(trimText(historyTable->item(row, 0)->text()));
-                action2->setDisabled(true);
-
-                QFont font3 = action3->font();
-                font3.setBold(false);
-                action3->setFont(font3);
-                action3->setText(trimText(historyTable->item(row + 1, 0)->text()));
-                action3->setDisabled(false);
-                disconnect(action3, &QAction::triggered, nullptr, nullptr);
-                connect(action3, &QAction::triggered, this, &myWindow::button_down_clicked);
-            } else {
-                QFont font1 = action1->font();
-                font1.setBold(false);
-                action1->setFont(font1);
-                action1->setText(trimText(historyTable->item(row - 1, 0)->text()));
-                action1->setDisabled(false);
-                disconnect(action1, &QAction::triggered, nullptr, nullptr);
-                connect(action1, &QAction::triggered, this, &myWindow::button_up_clicked);
-
-                QFont font2 = action2->font();
-                font2.setBold(true);
-                action2->setFont(font2);
-                action2->setText(trimText(historyTable->item(row, 0)->text()));
-                action2->setDisabled(true);
-
-                action3->setVisible(false);
-            }
-        }
+        QAction *const clearAction = actions[5];
+        clearAction->setText(tr("Clear %1 items").arg(numRows));
     }
 }
 
@@ -254,7 +139,6 @@ void myWindow::clipboard_updated()
 {
     if (!clipboardUpdate) {
         clipboardUpdate = true;
-        qDebug() << "SWALLOW";
         return;
     }
 
@@ -271,7 +155,6 @@ void myWindow::clipboard_updated()
     // only act on new items
     if (clipboard_hash != last_hash) {
         last_hash = clipboard_hash;
-        qDebug() << "RECEIVE:" << clipboard->text() << clipboard_hash << clipboard_mimedata << clipboard_mimedata->hasImage() << firstFormat;
         const int rowCount = historyTable->rowCount();
 
         // make space for a new row if already maxed out
@@ -398,7 +281,6 @@ void myWindow::setNewClipboard()
 
     clipboardUpdate = false;
     clipboard->setMimeData(mimedata, QClipboard::Clipboard);
-    qDebug() << "updated clipboard!";
 }
 
 void myWindow::button_up_clicked()

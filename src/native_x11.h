@@ -1,9 +1,6 @@
 #ifndef NATIVE_X11_H
 #define NATIVE_X11_H
 
-#include <X11/Xlib.h>
-#include <X11/keysym.h>
-
 #include <qglobal.h>
 #include <QAbstractNativeEventFilter>
 #include <QByteArray>
@@ -11,6 +8,9 @@
 #ifndef Q_OS_LINUX
     #error Must be on Linux at this point
 #endif
+
+#include <X11/Xlib.h>
+#include <X11/keysym.h>
 
 #include "myWindow.h"
 
