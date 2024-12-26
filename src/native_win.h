@@ -5,11 +5,11 @@
 #include <QAbstractNativeEventFilter>
 #include <QByteArray>
 
+#include "myWindow.h"
+
 #ifndef Q_OS_WIN
     #error Must be on Windows at this point
 #endif
-
-#include "myWindow.h"
 
 // hotkey ID's, used for MS Windows RegisterHotKey api
 enum HotkeyID {
