@@ -6,7 +6,7 @@
 
 bool nativeevent_win::raisedWindow = false;
 
-nativeevent_win::nativeevent_win(myWindow *window)
+nativeevent_win::nativeevent_win(myWindow *const window)
 {
     this->window = window;
 }

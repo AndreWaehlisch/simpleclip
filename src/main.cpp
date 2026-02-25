@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QSettings>
 #include <QProcessEnvironment>
+#include <QTimer>
 
 #include "myWindow.h"
 
@@ -16,10 +17,12 @@ static BOOL register_hotkey_up_ok = false;
 void cleanUp()
 {
     // unregister hotkeys we requested with MS Windows
-    if (register_hotkey_down_ok)
+    if (register_hotkey_down_ok) {
         UnregisterHotKey(NULL, hotkey_down);
-    if (register_hotkey_up_ok)
+    }
+    if (register_hotkey_up_ok) {
         UnregisterHotKey(NULL, hotkey_up);
+    }
 }
 #else
 #include "native_x11.h"
@@ -33,7 +36,6 @@ void cleanUp()
 }
 #endif
 
-// TODO: implement a simple search
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
@@ -49,9 +51,22 @@ int main(int argc, char *argv[])
     window.setWindowIcon(mainIcon);
     window.show();
 
-    const QSettings settings;
-    if (settings.contains("window_geometry"))
-        window.restoreGeometry(settings.value("window_geometry").toByteArray());
+    // restore window position (with a delay to make sure we really restore on the correct monitor)
+    auto restoreWindow = [&window]() {
+        const QSettings settings;
+
+        if (settings.contains("window_geometry")) {
+            window.restoreGeometry(settings.value("window_geometry").toByteArray());
+        }
+    };
+
+    QTimer restoreTimer1, restoreTimer2;
+    restoreTimer1.setSingleShot(true);
+    restoreTimer2.setSingleShot(true);
+    QObject::connect(&restoreTimer1, &QTimer::timeout, &window, restoreWindow);
+    QObject::connect(&restoreTimer2, &QTimer::timeout, &window, restoreWindow);
+    restoreTimer1.start(2);
+    restoreTimer2.start(500);
 
 // install native event filter so we get every hotkey message (even if we are, for example, minimized)
 #ifdef Q_OS_WIN
@@ -60,8 +75,9 @@ int main(int argc, char *argv[])
 
     UINT modifiers = MOD_WIN;
 
-    if (mod_alt)
+    if (mod_alt) {
         modifiers |= MOD_ALT;
+    }
 
     register_hotkey_down_ok = RegisterHotKey(NULL, hotkey_down, modifiers, 0x56); // WIN + ALT + v
     register_hotkey_up_ok = RegisterHotKey(NULL, hotkey_up, modifiers, 0x43); // WIN + ALT + c
